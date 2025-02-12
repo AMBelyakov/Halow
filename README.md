@@ -64,3 +64,48 @@ remark:
 (2) P series PIN4/5 needs power supply, A series does not;
 
 2. The module does not have a Shield by default. The name of the module with a shield is suffix-s, where S indicates shield.
+
+## :three: Quick Start 🎁
+
+🟢 PlatformIO is recommended because these examples were developed on it. 🟢 
+
+### 1、PlatformIO
+
+1. Install [Visual Studio Code](https://code.visualstudio.com/) and [Python](https://www.python.org/), and clone or download the project;
+2. Search for the `PlatformIO` plugin in the `VisualStudioCode` extension and install it;
+3. After the installation is complete, you need to restart `VisualStudioCode`
+4. After opening this project, PlatformIO will automatically download the required tripartite libraries and dependencies, the first time this process is relatively long, please wait patiently;
+5. After all the dependencies are installed, you can open the `platformio.ini` configuration file, uncomment in `example` to select a routine, and then press `ctrl+s` to save the `.ini` configuration file;
+6. Click :ballot_box_with_check: under VScode to compile the project, then plug in USB and select COM under VScode;
+7. Finally, click the :arrow_right:  button to download the program to Flash;
+
+
+### 2、Arduino IDE
+
+1. Install [Arduino IDE](https://www.arduino.cc/en/software)
+
+2. Copy all files under `this project/lib/` and paste them into the Arduion library path (generally `C:\Users\YourName\Documents\Arduino\libraries`);
+
+3. Open the Arduion IDE and click `File->Open` in the upper left corner to open an example in `this project/example/xxx/xxx.ino` under this item;
+
+4. Then configure Arduion. After the configuration is completed in the following way, you can click the button in the upper left corner of Arduion to compile and download;
+
+| Arduino IDE Setting                  | Value                             |
+| ------------------------------------ | --------------------------------- |
+| Board                                | **ESP32S3 Dev Module**            |
+| Port                                 | Your port                         |
+| USB CDC On Boot                      | Enable                            |
+| CPU Frequency                        | 240MHZ(WiFi)                      |
+| Core Debug Level                     | None                              |
+| USB DFU On Boot                      | Disable                           |
+| Erase All Flash Before Sketch Upload | Disable                           |
+| Events Run On                        | Core1                             |
+| Flash Mode                           | QIO 80MHZ                         |
+| Flash Size                           | **16MB(128Mb)**                   |
+| Arduino Runs On                      | Core1                             |
+| USB Firmware MSC On Boot             | Disable                           |
+| Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
+| PSRAM                                | **OPI PSRAM**                     |
+| Upload Mode                          | **UART0/Hardware CDC**            |
+| Upload Speed                         | 921600                            |
+| USB Mode                             | **CDC and JTAG**                  |
