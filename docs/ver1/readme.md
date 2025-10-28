@@ -17,3 +17,20 @@ The following networking modes are supported:
 
 4. Use [AT+ROAM](../AT_cmd.md##`AT+ROAM`) to enable roaming. The roaming function supports STA roaming between APs. STA will automatically select a stronger AP based on the signal conditions.
 
+# How to pair
+
+Two boards, one switch set to `STA`, the other switch set to `AP`; then simultaneously press the PAIR button. 
+
+Until the `CONNECT` model light flashes rapidly, release the PAIR button, and other indicator lights come on and the pairing is successful. Key
+
+![alt text](./img/image-1.png)
+
+When the antenna is connected and the pairing is successful, all four of the following lights will illuminate. 
+
+Among them, the red light indicates the connection status. When it is on, it means the connection has been successfully established. 
+
+The other three green lights indicate the signal strength. All three lights on means the signal is very strong, and the fewer lights that are on, the weaker the signal. 
+
+During the process of testing the distance, if all three signal lights go out, it indicates extremely poor signal, and at this point, it is the maximum communication distance.
+
+![alt text](./network_mode/img/3_image-2.png)
