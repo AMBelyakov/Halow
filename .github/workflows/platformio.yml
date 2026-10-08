@@ -11,6 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest  # 指定的运行器环境中运行 [ubuntu-latest, macos-latest, windows-latest]
     strategy:
+      fail-fast: false
       matrix:
         example: 
           - examples/AT_test
@@ -20,6 +21,8 @@ jobs:
           - examples/TX_AH_Rx00p
           - examples/TX_AH_Rx00p_AP
           - examples/TX_AH_Rx00p_STA
+          - examples/HalowVideoP2P_STA
+          - examples/HalowVideoP2P_AP
 
     steps:
       - uses: actions/checkout@v4
