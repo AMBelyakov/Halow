@@ -57,6 +57,9 @@ SOURCES = {
     "rappaport": "Rappaport, T. S. Wireless Communications : Principles and Practice / T. S. "
                  "Rappaport. – 2nd ed. – Upper Saddle River : Prentice Hall PTR, 2002. – XXIII, 707 "
                  "p. – ISBN 0-13-042232-0. – Текст : непосредственный.",
+    "russell": "Russell, M. Interchannel interference analysis of OFDM in a mobile environment / "
+               "M. Russell, G. L. Stüber // 1995 IEEE 45th Vehicular Technology Conference. – IEEE, "
+               "1995. – P. 820–824. – Текст : электронный.",
     "shannon": "Shannon, C. E. A Mathematical Theory of Communication / C. E. Shannon // Bell System "
                "Technical Journal. – 1948. – Vol. 27, no. 3. – P. 379–423. – Текст : электронный.",
     # --- аппаратура и программные средства
