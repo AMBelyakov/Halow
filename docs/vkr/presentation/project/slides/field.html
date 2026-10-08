@@ -1,13 +1,16 @@
 <section id="field" data-transition="fade" style="background:#F7F6F2; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
-<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Дальность: расчёт на одной плате и данные производителя</h2>
-<table style="font-size:26px; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif">
-<tr style="background:#E4E1D8"><th style="width:40%">Режим (запас 10 дБ)</th><th style="width:20%; text-align:center">Своб. простр., км</th><th style="width:20%; text-align:center">Антенны 1,5 / 1,5 м, км</th><th style="width:20%; text-align:center">Антенна на 50 м, км</th></tr>
-<tr style="background:#FDFCFA"><td style="">HaLow 2 МГц, MCS 0 (оценка), 14 дБм</td><td style="text-align:center">4,90</td><td style="text-align:center">0,36</td><td style="text-align:center">2,06</td></tr>
-<tr style="background:#FDFCFA"><td style="">HaLow 2 МГц, MCS 7 (оценка), 14 дБм</td><td style="text-align:center">0,98</td><td style="text-align:center">0,16</td><td style="text-align:center">0,92</td></tr>
-<tr style="background:#FDFCFA"><td style="">ESP32-S3 802.11n MCS 0, 20 дБм</td><td style="text-align:center">1,32</td><td style="text-align:center">0,31</td><td style="text-align:center">1,32</td></tr>
-<tr style="background:#FDFCFA"><td style="">ESP32-S3 802.11b 1 Мбит/с, 20 дБм</td><td style="text-align:center">2,58</td><td style="text-align:center">0,43</td><td style="text-align:center">2,51</td></tr>
-</table>
-<p style="font-size:26px; line-height:1.4; color:#4A5568">Производитель модуля TX-AH: 2 МГц, +20 дБм — 1200 м, &gt; 2 Мбит/с; на 300 и 600 м RSSI −59…−69 дБм, в пределах 2 дБ от расчёта свободного пространства. При норме 14 дБм это около 600 м. Подъём антенны отодвигает излом с 26 до 868 м.</p>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 13 / 17</p>
-<aside>Собственных измерений на дальности нет, поэтому дальность оценена расчётом бюджета канала по паспортам обоих радиотрактов платы и сверена с натурными данными производителя модуля. В свободном пространстве граница связи Wi-Fi HaLow — от километра на MCS 7 до почти 5 км на MCS 0; у земли она сокращается в разы, антенна на высоте 50 м её возвращает. При равной скорости Wi-Fi 2,4 ГГц на той же плате по нормам мощности даёт сопоставимую дальность; преимущество HaLow — малые скорости и препятствия. Данные производителя на 300 и 600 метрах совпадают с расчётом в пределах 2 дБ.</aside>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Какая скорость доступна на каком расстоянии</h2>
+<div style="display:flex; gap:48px; align-items:center">
+<div style="background:#FFFFFF; border:1px solid #E0DDD4; border-radius:16px; padding:16px">
+<img src="/_blob/21447c38f5e60c7ca5feed11a749748e" alt="Тепловая карта: наибольшая скорость физического уровня Wi-Fi HaLow, Wi-Fi 2,4 ГГц и LoRa на расстояниях 0,1–20 км для свободного пространства, антенн у земли и антенны на борту на 50 м" style="width:760px; height:660px; object-fit:contain">
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:32px">
+<p style="font-size:28px; line-height:1.4; color:#14213D">У земли все технологии теряют дальность в разы; антенна на борту на 50 м возвращает её.</p>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Wi-Fi HaLow на малых скоростях держит связь до 5 км, Wi-Fi 2,4 ГГц — до 2 км; LoRa — дальше всех, но в единицах кбит/с.</p>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Производитель модуля: 2 МГц, +20 дБм — 1200 м, &gt; 2 Мбит/с; на 300 и 600 м расчёт сходится с замером в пределах 2 дБ.</p>
+<p style="font-size:24px; line-height:1.4; color:#5F6673">Расчёт автора: нормы мощности РФ, антенны 0 дБи, запас 10 дБ.</p>
+</div>
+</div>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 13 / 18</p>
+<aside>Собственных измерений на дальности нет, поэтому дальность оценена расчётом бюджета канала по паспортам обоих радиотрактов платы и сверена с натурными данными производителя модуля. Тепловая карта показывает для каждого расстояния наибольшую скорость, при которой связь сохраняется с запасом 10 децибел. Три условия: свободное пространство, обе антенны у земли и антенна на борту на высоте 50 метров. У земли за точкой излома потери от частоты не зависят, и все технологии теряют дальность в разы; подъём антенны её возвращает. Wi-Fi HaLow на малых скоростях держит связь до 5 километров, Wi-Fi 2,4 гигагерца — до двух; LoRa дальше всех, но в единицах килобит в секунду.</aside>
 </section>

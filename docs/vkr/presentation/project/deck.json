@@ -20,6 +20,7 @@
   "release",
   "capture",
   "field",
+  "compare",
   "integration",
   "econ",
   "conclusions",
@@ -39,7 +40,7 @@
    "start": "whyexp"
   },
   "results": {
-   "description": "Результаты практической части: скорость, ограничивающее звено, релиз, наводка",
+   "description": "Результаты практической части: скорость, ограничивающее звено, итоговые результаты, наводка",
    "start": "throughput"
   },
   "finish": {
