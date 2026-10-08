@@ -26,6 +26,57 @@ Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 SemaphoreHandle_t debuglock;
 
 
+//************************************[ SSD1306 ]******************************************
+bool ssd1306_init(void)
+{
+    Serial.println("OLED FeatherWing test");
+    Wire.beginTransmission(0x3C);
+    if (Wire.endTransmission() == 0)
+    {
+        display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+        return true;
+    }
+    return false;
+}
+//************************************[ SDCARD ]******************************************
+bool sdcard_init(void)
+{
+    if (!SD.begin(TF_SPI_CS))
+    {
+        Serial.println("Card Mount Failed");
+        return false;
+    }
+    uint8_t cardType = SD.cardType();
+
+    if (cardType == CARD_NONE)
+    {
+        Serial.println("No SD card attached");
+        return false;
+    }
+    Serial.print("SD Card Type: ");
+    if (cardType == CARD_MMC)
+    {
+        Serial.println("MMC");
+    }
+    else if (cardType == CARD_SD)
+    {
+        Serial.println("SDSC");
+    }
+    else if (cardType == CARD_SDHC)
+    {
+        Serial.println("SDHC");
+    }
+    else
+    {
+        Serial.println("UNKNOWN");
+    }
+
+    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+    Serial.printf("SD Card Size: %lluMB\n", cardSize);
+
+    return true;
+}
+
 //************************************[ TX-AH ]******************************************
 #if 1
 int8_t waitResponse(uint32_t timeouts, String &data, const char *r1 = "OK", const char *r2 = "ERROR")
@@ -160,7 +211,62 @@ bool camera_init(void)
     }
     return true;
 }
+//************************************[ Other fun ]******************************************
+char *line_align(char *buf, const char *str1, const char *str2)
+{
+    int max_line_size = BUF_MAX_LEN - 1;
+    int16_t w2 = strlen(str2);
+    int16_t w1 = max_line_size - w2;
+    snprintf(buf, BUF_MAX_LEN, "%-*s%-*s", w1, str1, w2, str2);
+    return buf;
+}
 
+bool tx_ah_conn_status = false;
+char rssi_buf[16];
+
+void lcd_info_show(void)
+{
+    if (ssd1306_ret == false)
+    {
+        Serial.println("******************************");
+        Serial.println((tx_ah_ret == true ? "TX-AH   PASS" : "TX-AH    ---"));
+        Serial.println((ssd1306_ret == true ? "SSD1306 PASS" : "SSD1306  ---"));
+        Serial.println((sdcard_ret == true ? "SDCard  PASS" : "SDCard   ---"));
+        Serial.println((camera_ret == true ? "CAMERA  PASS" : "CAMERA   ---"));
+        Serial.println(" ");
+
+        Serial.println(line_align(buf, "Role:", "STA "));
+
+        if (tx_ah_conn_status) {
+            Serial.println(line_align(buf, "RSSI:", rssi_buf));
+        } else {
+            Serial.println("Disconnect!!!");
+        }
+    } else {
+        // Clear the buffer.
+        display.clearDisplay();
+        display.display();
+        display.setTextSize(1);
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0, 0);
+        display.println(line_align(buf, "LCD:", (ssd1306_ret == true ? "PASS" : "---")));
+        display.println(line_align(buf, "SD:", (sdcard_ret == true ? "PASS" : "---")));
+        display.println(line_align(buf, "CAM:", (camera_ret == true ? "PASS" : "---")));
+        display.println(line_align(buf, "AH:", (tx_ah_ret == true ? "PASS" : "---")));
+        display.println("---------------------");
+
+        display.println(line_align(buf, "Role:", "STA"));
+
+        if (tx_ah_conn_status) {
+            display.println(line_align(buf, "RSSI:", rssi_buf));
+            display.println(line_align(buf, "Recv:", recv_data));
+        } else {
+            display.println("Disconnect!!!");
+        }
+        
+        display.display();
+    }
+}
 
 // ========== ФУНКЦИЯ ОТПРАВКИ КАДРА ==========
 void sendFrame(camera_fb_t *fb) {
