@@ -1,10 +1,12 @@
-
-
 #include "utilities.h"
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+
+#include <ETH.h>                 // Ethernet (патч-корд)
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
 #include "FS.h"
 #include "SD.h"
@@ -26,6 +28,19 @@ camera_config_t config;
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 SemaphoreHandle_t debuglock;
 
+// --- Web-сервер и видео ---
+AsyncWebSocket ws("/ws");                // WebSocket для видеокадров
+AsyncWebServer server(80);              // HTTP-сервер
+uint8_t *lastJpeg = nullptr;            // последний кадр для новых клиентов
+size_t lastJpegLen = 0;
+SemaphoreHandle_t frameMutex;           // защита lastJpeg
+
+// --- Приём JPEG по UART ---
+bool receivingData = false;
+uint32_t expectedLen = 0;
+uint32_t receivedLen = 0;
+uint8_t *jpegBuffer = nullptr;
+
 //************************************[ SSD1306 ]******************************************
 bool ssd1306_init(void)
 {
@@ -38,6 +53,7 @@ bool ssd1306_init(void)
     }
     return false;
 }
+
 //************************************[ SDCARD ]******************************************
 bool sdcard_init(void)
 {
@@ -47,7 +63,6 @@ bool sdcard_init(void)
         return false;
     }
     uint8_t cardType = SD.cardType();
-
     if (cardType == CARD_NONE)
     {
         Serial.println("No SD card attached");
@@ -70,31 +85,23 @@ bool sdcard_init(void)
     {
         Serial.println("UNKNOWN");
     }
-
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
     Serial.printf("SD Card Size: %lluMB\n", cardSize);
-
     return true;
 }
 
 //************************************[ TX-AH ]******************************************
-#if 1
 int8_t waitResponse(uint32_t timeouts, String &data, const char *r1 = "OK", const char *r2 = "ERROR")
 {
     int index = 0;
     uint32_t start_tick = millis();
-
     do {
         while (SerialAT.available() > 0) {
             int a = SerialAT.read();
             if (a < 0)
                 continue; // Skip 0x00 bytes, just in case
-
             data.reserve(1024);
             data += static_cast<char>(a);
-
-            // SerialMon.println(data.c_str());
-
             if(data.endsWith(r1)){
                 index = AH_Rx00P_RESPONE_OK;
                 SerialMon.println(data.c_str());
@@ -106,7 +113,6 @@ int8_t waitResponse(uint32_t timeouts, String &data, const char *r1 = "OK", cons
             }
         }
     } while (millis() - start_tick < timeouts);
-
 finish:
     return index;
 }
@@ -116,31 +122,21 @@ int8_t waitResponse(uint32_t timeouts)
     String data;
     return waitResponse(timeouts, data);
 }
+
 int8_t waitResponse(void)
 {
     return waitResponse(1000);
 }
+
 void sendAT(String s)
 {
     s = "AT" + s;
     SerialAT.write(s.c_str());
 }
+
 bool TX_AH_init(void)
 {
     int at_cnt = 0;
-    // sendAT("+SYSDBG=LMAC,0");
-    // waitResponse() == AH_Rx00P_RESPONE_OK ? at_cnt : at_cnt++;
-    // sendAT("+BSS_BW=8");
-    // waitResponse() == AH_Rx00P_RESPONE_OK ? at_cnt : at_cnt++;
-
-    // sendAT("+SYSDBG=LMAC,0");
-    // if(waitResponse() == AH_Rx00P_RESPONE_OK) SerialMon.println("AT+SYSDBG SUCCEED");
-    // else SerialMon.println("AT+SYSDBG ERROR");
-
-    // sendAT("+BSS_BW=8");
-    // if(waitResponse() == AH_Rx00P_RESPONE_OK) SerialMon.println("AT+BSS_BW SUCCEED");
-    // else SerialMon.println("AT+BSS_BW FAILD");
-
 
     sendAT("+SYSDBG=LMAC,0");
     if (waitResponse() == AH_Rx00P_RESPONE_OK)
@@ -171,7 +167,7 @@ bool TX_AH_init(void)
 
     return (at_cnt == 0);
 }
-#endif
+
 //************************************[ CAMERA ]******************************************
 bool camera_init(void)
 {
@@ -226,6 +222,7 @@ bool camera_init(void)
     }
     return true;
 }
+
 //************************************[ Other fun ]******************************************
 char *line_align(char *buf, const char *str1, const char *str2)
 {
@@ -281,30 +278,132 @@ void lcd_info_show(void)
     }
 }
 
-void setup()
-{
-    Serial.begin(115200);
+// ******************* НАСТРОЙКА WEB-СЕРВЕРА *******************
+void setupWebServer() {
+    // WebSocket: при новом подключении отдаём последний кадр
+    ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client,
+                 AwsEventType type, void *arg, uint8_t *data, size_t len) {
+        if (type == WS_EVT_CONNECT) {
+            xSemaphoreTake(frameMutex, portMAX_DELAY);
+            if (lastJpeg && lastJpegLen > 0) {
+                client->binary(lastJpeg, lastJpegLen);
+            }
+            xSemaphoreGive(frameMutex);
+        }
+    });
+    server.addHandler(&ws);
 
-    delay(3000);
+    // Главная страница с видео
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        String html = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>HaLow Video</title></head>
+<body>
+  <h2>Live video from STA (HaLow → Ethernet)</h2>
+  <img id="stream" style="width:320px; height:240px; background:#000;" />
+  <script>
+    const ws = new WebSocket('ws://' + location.host + '/ws');
+    ws.binaryType = 'blob';
+    ws.onmessage = (e) => {
+      const url = URL.createObjectURL(e.data);
+      document.getElementById('stream').src = url;
+    };
+  </script>
+</body>
+</html>
+)rawliteral";
+        request->send(200, "text/html", html);
+    });
 
-    debuglock = xSemaphoreCreateBinary();
-    assert(debuglock);
-    xSemaphoreGive(debuglock);
+    server.begin();
+}
 
-    Wire.begin(BOARD_I2C_SDA, BOARD_I2C_SCL);
-    SPI.begin(TF_SPI_SCK, TF_SPI_MISO, TF_SPI_MOSI, TF_SPI_CS);
-    SerialAT.begin(115200, SERIAL_8N1, SERIAL_AT_RXD, SERIAL_AT_TXD);
+// ******************* ОТПРАВКА КАДРА ВСЕМ КЛИЕНТАМ *******************
+void broadcastJpeg(uint8_t *data, size_t len) {
+    // Отправить всем подключённым WebSocket-клиентам
+    ws.binaryAll(data, len);
 
-    ssd1306_ret = ssd1306_init();
-    camera_ret = camera_init();
-    sdcard_ret = sdcard_init();
-    tx_ah_ret = TX_AH_init();
+    // Сохранить как последний кадр для новых клиентов
+    xSemaphoreTake(frameMutex, portMAX_DELAY);
+    free(lastJpeg);
+    lastJpeg = (uint8_t*)malloc(len);
+    if (lastJpeg) {
+        memcpy(lastJpeg, data, len);
+        lastJpegLen = len;
+    }
+    xSemaphoreGive(frameMutex);
+}
 
-    // if (ssd1306_ret)
-    // {
-        lcd_info_show();
-    // }
-    pinMode(BOARD_LED, OUTPUT);
+// ******************* ИНИЦИАЛИЗАЦИЯ ETHERNET *******************
+
+// Настройки Ethernet
+bool eth_connected = false;
+
+void WiFiEvent(WiFiEvent_t event) {
+  switch (event) {
+    case ARDUINO_EVENT_ETH_START:
+      Serial.println("ETH Started");
+      ETH.setHostname("halow-ap");
+      break;
+    case ARDUINO_EVENT_ETH_CONNECTED:
+      Serial.println("ETH Connected");
+      break;
+    case ARDUINO_EVENT_ETH_GOT_IP:
+      Serial.print("ETH Got IP: '");
+      Serial.print(ETH.localIP());
+      Serial.print("' (");
+      Serial.print((uint32_t)ETH.subnetMask());
+      Serial.println(")");
+      eth_connected = true;
+      break;
+    case ARDUINO_EVENT_ETH_DISCONNECTED:
+      Serial.println("ETH Disconnected");
+      eth_connected = false;
+      break;
+    default:
+      break;
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(3000);
+
+  debuglock = xSemaphoreCreateBinary();
+  assert(debuglock);
+  xSemaphoreGive(debuglock);
+
+  Wire.begin(BOARD_I2C_SDA, BOARD_I2C_SCL);
+  SPI.begin(TF_SPI_SCK, TF_SPI_MISO, TF_SPI_MOSI, TF_SPI_CS);
+  SerialAT.begin(115200, SERIAL_8N1, SERIAL_AT_RXD, SERIAL_AT_TXD);
+
+  WiFi.onEvent(WiFiEvent);
+  ETH.begin();
+
+  Serial.print("Waiting for Ethernet connection");
+  while (!eth_connected) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println(" Ethernet ready!");
+
+
+  ETH.config(IPAddress(10, 10, 10, 123), IPAddress(192, 168, 56, 1), IPAddress(255, 0, 0, 0));
+
+
+  tx_ah_ret = TX_AH_init();  
+
+  frameMutex = xSemaphoreCreateMutex();
+  
+  setupWebServer();
+
+  
+  server.begin();
+  Serial.print("HTTP server started on http://");
+  Serial.println(ETH.localIP());
+
+  pinMode(BOARD_LED, OUTPUT);
 }
 
 uint32_t last_tick = 0;
@@ -365,13 +464,77 @@ void loop()
         lcd_info_show();
     }
 
-    while (SerialAT.available())
-    {
-        SerialMon.write(SerialAT.read());
+    // ---------- ОБРАБОТКА ВХОДЯЩИХ ДАННЫХ ОТ HALOW (ПРИЁМ JPEG) ----------
+    while (SerialAT.available()) {
+        char c = SerialAT.read();
+        static String line;
+
+        if (!receivingData) {
+            // Ждём строку +RXDATA:<длина>
+            line += c;
+            if (c == '\n') {
+                line.trim();
+                if (line.startsWith("+RXDATA:")) {
+                    int comma = line.indexOf(',');
+                    if (comma != -1) {
+                        expectedLen = line.substring(comma+1).toInt();
+                        receivingData = true;
+                        receivedLen = 0;
+                        if (jpegBuffer) free(jpegBuffer);
+                        jpegBuffer = (uint8_t*)malloc(expectedLen);
+                        if (!jpegBuffer) {
+                            Serial.println("Out of memory for JPEG");
+                            receivingData = false;
+                        } else {
+                            Serial.printf("Receiving %d bytes...\n", expectedLen);
+                        }
+                    }
+                } else {
+                    // Обычные AT-ответы – выводим в Serial
+                    SerialMon.print(line);
+                    SerialMon.print('\n');
+                }
+                line = "";
+            }
+        } else {
+            // Принимаем байты JPEG
+            if (receivedLen < expectedLen) {
+                jpegBuffer[receivedLen++] = (uint8_t)c;
+                if (receivedLen == expectedLen) {
+                    Serial.printf("Received JPEG frame, %d bytes\n", expectedLen);
+
+                    // Сохраняем на SD (если нужно)
+                    if (sdcard_ret) {
+                        String filename = "/frame_" + String(millis()) + ".jpg";
+                        File f = SD.open(filename, FILE_WRITE);
+                        if (f) {
+                            f.write(jpegBuffer, expectedLen);
+                            f.close();
+                        }
+                    }
+
+                    // Отправляем кадр в браузеры
+                    broadcastJpeg(jpegBuffer, expectedLen);
+
+                    // Освобождаем буфер, так как мы его уже скопировали в broadcastJpeg
+                    free(jpegBuffer);
+                    jpegBuffer = nullptr;
+                    receivingData = false;
+                }
+            } else {
+                // Ошибка длины
+                receivingData = false;
+                free(jpegBuffer);
+                jpegBuffer = nullptr;
+                Serial.println("Data length mismatch");
+            }
+        }
     }
-    while (SerialMon.available())
-    {
+
+    // Пересылка из Serial Monitor в HaLow (для ручной отладки)
+    while (SerialMon.available()) {
         SerialAT.write(SerialMon.read());
     }
+
     delay(1);
 }

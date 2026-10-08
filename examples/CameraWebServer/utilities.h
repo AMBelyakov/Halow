@@ -26,10 +26,13 @@
 // AH-Rx00P
 #define SerialMon     Serial
 #define SerialAT      Serial1
-#define SERIAL_AT_RXD 5
-#define SERIAL_AT_TXD 4
+#define SERIAL_AT_RXD 4
+#define SERIAL_AT_TXD 5
 
 #define BOARD_LED      38
+
+#define BOARD_I2C_SDA  7
+#define BOARD_I2C_SCL  6
 //
 
 

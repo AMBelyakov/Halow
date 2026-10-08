@@ -1,0 +1,53 @@
+{
+ "v": 4,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-09-27T14:30:00Z"
+ },
+ "title": "Защита ВКР: Wi-Fi HaLow для БПЛА",
+ "cover": "cover",
+ "order": [
+  "cover",
+  "relevance",
+  "niche",
+  "goal",
+  "whyexp",
+  "theory",
+  "stand",
+  "program",
+  "bandwidth",
+  "throughput",
+  "limit",
+  "capture",
+  "field",
+  "integration",
+  "econ",
+  "conclusions",
+  "thanks"
+ ],
+ "sections": {
+  "intro": {
+   "description": "Почему для БПЛА нужен Wi-Fi HaLow: ниша, цель и задачи",
+   "start": "cover"
+  },
+  "method": {
+   "description": "Обоснование эксперимента, теоретическая оценка, стенд и программа",
+   "start": "whyexp"
+  },
+  "results": {
+   "description": "Результаты лабораторных испытаний платформы",
+   "start": "bandwidth"
+  },
+  "finish": {
+   "description": "Натурный этап, предложения для БПЛА, экономика и выводы",
+   "start": "field"
+  }
+ },
+ "faces": {
+  "ibm-plex-sans": {
+   "family": "IBM Plex Sans",
+   "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap"
+  }
+ },
+ "designSystems": []
+}

@@ -1,0 +1,498 @@
+#ifndef _TXW830X_TEST_ATCMD_H_
+#define _TXW830X_TEST_ATCMD_H_
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+
+/**
+* @ "AT+REG_RD:0X20000000"
+**/
+int32 atcmd_reg_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+REG_WT=0X20000000,0x12345678
+**/
+int32 atcmd_reg_wt_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TEST_EN=?/0/1"
+**/
+int32 atcmd_test_start_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_DST_ADDR=0XB0B0B0B0B0"
+**/
+int32 atcmd_tx_dst_addr_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_FC=0x308"
+**/
+int32 atcmd_tx_fc_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_FLAGS=0x80000000"
+**/
+int32 atcmd_tx_flags_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_LEN=?/100"
+**/
+int32 atcmd_tx_len_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_PAYLOAD_TYPE=?/N/S/T(Normal/Sine/Tringle)",
+**/
+int32 atcmd_tx_type_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_SINE_PHA_AMP=?/1",
+**/
+int32 atcmd_tx_pha_amp_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_SINE_STEP=?/1",
+**/
+int32 atcmd_tx_step_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_CONT=?/0/1"
+**/
+int32 atcmd_tx_cont_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_MODE=?/0/1"
+**/
+int32 atcmd_tx_start_hdl(const char *cmd, char *argv[], uint32 argc);
+/**
+* @ "AT+TX_TRIG=?/0/1"
+**/
+int32 atcmd_tx_trig_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+TX_MCS=?/0/1/../7/../255"
+**/
+int32 atcmd_tx_mcs_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+MCAST_MCS=?/0/1/../7/../255"
+**/
+int32 atcmd_mcast_mcs_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+TX_MCS_max=?/0/1/../7/../255"
+**/
+int32 atcmd_tx_mcs_max_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+TX_MCS_mix=?/0/1/../7/../255"
+**/
+int32 atcmd_tx_mcs_min_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ant_dual_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ant_ctrl_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ant_auto_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ant_def_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_BW=?/1/2/4/8/
+**/
+int32 atcmd_tx_bw_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_BW_MCAST=?/1/2/4/8/
+**/
+int32 atcmd_mcast_bw_hdl(const char *cmd, char *argv[], uint32 argc);
+
+static int32 lo_freq_valid_check(uint32 lo_freq);
+
+/**
+* @ "AT+LO_FREQ=?/630000/930000",test lmac_bss_chan_switch(lo_freq) while tx cont enable ok
+**/
+int32 atcmd_lo_freq_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_freq_list_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_PWR_AUTO=?/0/1",
+**/
+int32 atcmd_tx_pwr_auto_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+TX_PWR_MAX=?/0/1/../7/../255"
+**/
+int32 atcmd_tx_pwr_max_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_PWR_SUPER=?/0/1"
+**/
+int32 atcmd_tx_pwr_super_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_PWR_SUPER_TH=?/0/1"
+**/
+int32 atcmd_tx_pwr_super_th_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_tx_rate_fixed_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_ATTN=?/6.0",
+**/
+int32 atcmd_tx_attn_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_CW=?/1/0",
+**/
+int32 atcmd_tx_cw_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_MAX_AGG=?/16",
+**/
+int32 atcmd_tx_max_agg_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_MAX_SYMS=?/16",
+**/
+int32 atcmd_tx_max_syms_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+XO_CS=?/0x8",
+**/
+int32 atcmd_xo_cs_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+XO_CS_AUTO=?/0x8",
+**/
+int32 atcmd_xo_cs_auto_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+/**
+* @: AT+T_SENSOR=?
+**/
+int32 atcmd_t_sensor_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @: "AT+MAC_ADDR=0X102030405060"
+**/
+int32 atcmd_mac_addr_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+MCAST_DUP=?/=7"
+**/
+int32 atcmd_mcast_dup_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+MCAST_DUP=?/=7"
+**/
+int32 atcmd_mcast_reorder_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+/**
+* @ "AT+MCAST_DUP=?/=7"
+**/
+int32 atcmd_mcast_rts_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+TX_CNT_MAX=?/=7,31"
+**/
+int32 atcmd_tx_cnt_max_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+/**
+* @ "AT+SET_RTS=?/50"
+**/
+int32 atcmd_set_rts_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+SET_BGRSSI=0/23
+**/
+int32 atcmd_set_bgrssi_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+SET_BGRSSI_AVG=0/23
+**/
+int32 atcmd_set_bgrssi_avg_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ at+pri_chan= 1~6, 0/7 not recommand
+**/
+int32 atcmd_set_pri_chan_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+EDCA_CW=?/ac,cw_min,cw_max"
+*    AC_BK = 0,
+*    AC_BE = 1,
+*    AC_VI = 2,
+*    AC_VO = 3,
+**/
+int32 atcmd_edca_cw_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_edca_aifs_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_edca_txop_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+/**
+* @ "AT+EVM_MARGIN=?/3"
+**/
+int32 atcmd_evm_margin_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+CCMP_SUPPORT
+**/
+int32 atcmd_ccmp_support_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+PRINT_PERIOD=?/5"
+**/
+int32 atcmd_lmac_print_period_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+BSS_BW=?/1/2/4/8
+**/
+int32 atcmd_bss_bw_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+TX_PKTS=?
+**/
+int32 atcmd_tx_pkts_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+TX_FAIL=?
+**/
+int32 atcmd_tx_fail_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+RX_RSSI=?
+**/
+int32 atcmd_rx_rssi_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+RX_EVM=?
+**/
+int32 atcmd_rx_evm_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+RX_PKTS=?
+**/
+int32 atcmd_rx_pkts_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+RX_ERR=?
+**/
+int32 atcmd_rx_err_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ AT+RX_AGC=?
+**/
+int32 atcmd_rx_agc_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+BUS_WT=?/0/1",
+**/
+int32 atcmd_bus_wt_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+NOR_RD=?/0/1",
+**/
+int32 atcmd_nor_rd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/*
+* @"AT+CS_NUM=?/0/1/../7/../255"
+**/
+int32 atcmd_cs_num_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+CS_CNT=?/0/1/../7/../255"
+**/
+int32 atcmd_cs_cnt_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+CHAN_SCAN=?/0/1"
+**/
+int32 atcmd_chan_scan_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+AUTO_CS=?/0/1"
+**/
+int32 atcmd_cs_enable_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+/**
+* @"AT+AUTO_CS=?/0/1"
+**/
+int32 atcmd_cs_th_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_cs_period_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @"AT+CS_PERIOD=?/0/1"
+**/
+int32 atcmd_acs_start_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ack_to_extra_hdl(const char *cmd, char *argv[], uint32 argc);
+
+#if !defined (TX4001A)
+int32 atcmd_ft_att_hdl(const char *cmd, char *argv[], uint32 argc);
+#endif
+
+/**
+* @ "AT+BGRSSI_MARGIN=?/0/3"
+**/
+int32 atcmd_bgrssi_margin_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+BGRSSI_SPUR=?/0/3"
+**/
+int32 atcmd_bgrssi_spur_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+PCF_EN=?/0/1"
+**/
+int32 atcmd_pcf_en_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+PCF_PERIOD=?/0/1"
+**/
+int32 atcmd_pcf_period_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+PCF_PERCENT=?/0/1"
+**/
+int32 atcmd_pcf_percent_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+OBSS_NAV_DIFF=?/0/1"
+**/
+int32 atcmd_obss_nav_diff_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+OBSS_CCA_DIFF=?/0/4"
+**/
+int32 atcmd_obss_cca_diff_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+set_agc=?/0/4/5"
+**/
+int32 atcmd_set_agc_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+set_agc_th=?/a,b"
+**/
+int32 atcmd_set_agc_threshold_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+/**
+* @ "AT+txop_en=?/0/1"
+**/
+int32 atcmd_txop_en_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+tx_trv_pilot_en=?/0/1"
+**/
+int32 atcmd_tx_trv_pilot_en_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+tx_bw_dynamic=?/0/1"
+**/
+int32 atcmd_tx_bw_dynamic_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+cca_obsv=?/1/2/4..128 sec"
+**/
+int32 atcmd_cca_obsv_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_cts_dup_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_lmac_dbgsel_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_rts_dup_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_sleep_en_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ap_sleep_mode(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_wake_stas_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_strictly_ordered_hdl(const char *cmd, char *argv[], uint32 argc);
+
+//AT+TX_AGG_auto=1/0
+int32 atcmd_agg_auto_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_rx_ordered_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+ * @ "AT+LOADDEF=1"
+ **/
+int32 atcmd_loaddef_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_qa_cfg_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_qa_rxthd_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_qa_txthd_hdl(const char *cmd, char *argv[], uint32 argc);
+int32 atcmd_qa_start_hdl(const char *cmd, char *argv[], uint32 argc);
+int32 atcmd_qa_results_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+short_gi=?/0/1"
+**/
+int32 atcmd_short_gi_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+obss_switch=?/0/1"
+**/
+int32 atcmd_obss_switch_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+obss_edca=?/0/1"
+**/
+int32 atcmd_obss_edca_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+obss_th=?/-30/-40"
+**/
+int32 atcmd_obss_th_hdl(const char *cmd, char *argv[], uint32 argc);
+
+/**
+* @ "AT+tx_delay=?/5/10"
+**/
+int32 atcmd_tx_delay_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_rc_new_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_reboot_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_rf_reset_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_phy_reset_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_adc_dump_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_short_th_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_qa_att_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_lo_table_read_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_ps_check_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_radio_onoff_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_sta_info_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_txpower_hdl(const char *cmd, char *argv[], uint32 argc);
+
+int32 atcmd_set_vdd13_hdl(const char *cmd, char *argv[], uint32 argc);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+

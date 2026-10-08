@@ -1,0 +1,103 @@
+; PlatformIO Project Configuration File
+;
+;   Build options: build flags, source filter
+;   Upload options: custom upload port, speed and extra flags
+;   Library options: dependencies, extra library storages
+;   Advanced options: extra scripting
+;
+; Please visit documentation for the other options and examples
+; https://docs.platformio.org/page/projectconf.html
+
+[platformio]
+
+;; Examples only one is valid
+
+;; --- Видеомост HaLow: прошить обе платы по очереди, переключая src_dir ---
+;; ВАЖНО: после смены src_dir делать clean (или удалять .pio/build/T-Halow) —
+;; иначе сборка тянет старые пути из кеша и падает с "No such file or directory".
+;src_dir = examples/CameraSelfTest    ; изолированный тест камеры (диагностика)
+;src_dir = examples/HalowPassthrough  ; сервис: ПК <-> модуль напрямую (AT-команды, AT+FWUPG/XMODEM)
+;; --- Прошивка модуля 1.6.4.3 (AT+TXDATA). На 2.4.1.3 НЕ работают: в SDK 2.4
+;; --- команды AT+TXDATA нет вообще, как и AT+MODE/AT+KEYMGMT/AT+CONN_STATE.
+;src_dir = examples/HalowVideo_STA   ; плата с камерой (передатчик)
+;src_dir = examples/HalowVideo_AP  ; приёмная плата (в её RJ45 идёт патч-корд к ПК)
+
+;; --- Прошивка модуля 2.4.1.3 шага 3, прозрачный режим uart_p2p ---
+src_dir = examples/HalowVideoP2P_STA  ; плата с камерой (передатчик)
+;;src_dir = examples/HalowVideoP2P_AP   ; приёмная плата (USB к ПК, halow_viewer.py)
+
+; src_dir = examples/factory
+; src_dir = examples/Japan_MIC
+; src_dir = examples/TX_AH_Rx00p_AP
+; src_dir = examples/TX_AH_Rx00p_STA
+; src_dir = examples/TF_card
+; src_dir = examples/CameraWebServer
+; src_dir = examples/TX_AH_Rx00p
+
+; src_dir = examples/AT_test
+; ----------------------------------------------
+boards_dir = boards
+; default_envs = T-Halow
+; src_dir = examples/${platformio.default_envs}
+
+[env:T-Halow]
+; 6.3.0 — версия, на которой разработчики LilyGo собирали рабочий CameraWebServer.
+; На 6.11.0 драйвер esp32-camera даёт регрессию OV5640: сенсор определяется, но
+; кадры не идут. Если камера не нужна (сборка AP) — можно вернуть 6.11.0.
+platform = espressif32@6.3.0
+board = T-Halow
+framework = arduino
+
+upload_speed = 115200
+
+monitor_filters = esp32_exception_decoder 
+
+; extra_scripts =  ./script/pos_extra_script.py
+
+build_flags = 
+    ; Enable UARDUINO_USB_CDC_ON_BOOT will start printing and wait for terminal access during startup
+    -DARDUINO_USB_CDC_ON_BOOT=1
+
+    ; Enable UARDUINO_USB_CDC_ON_BOOT will turn off printing and will not block when using the battery
+    ; -UARDUINO_USB_CDC_ON_BOOT
+
+    ; TFT_eSPI warning elimination
+    -DDISABLE_ALL_LIBRARY_WARNINGS
+
+    ; 0, а не 3: при уровне 3 драйвер камеры логирует из cam_task, а первый
+    ; такой лог лениво создаёт мьютекс stdout (malloc) и переполняет его стек
+    ; -> Guru Meditation (cam_task). Наши SerialMon.printf от этого флага не зависят.
+    ;
+    ; 13.08: стояло 3 вопреки этому же комментарию, и CameraSelfTest падал
+    ; ровно так, как здесь описано: cam_task -> esp_log_write -> vprintf ->
+    ; uart_write -> Stack canary watchpoint. Печатал он при этом EV-VSYNC-OVF.
+    -DCORE_DEBUG_LEVEL=0
+
+    -DBOARD_HAS_PSRAM=1
+    ; -mfix-esp32-psram-cache-issue
+
+    -DARDUINO_USB_MODE=1
+
+    ; ! Using T-Display-Pro V1.0 , uncomment use V1.1 ,
+    ; ! The difference between V1.0 and V1.1 is the backlight driver.
+    ; -DUSING_DISPLAY_PRO_V1
+
+
+; Веб-сервер на ESP32 не нужен: видео мостится модулем в RJ45, а страницу
+; отдаёт tools/halow_viewer.py на ПК.
+lib_deps =
+    SPI
+    Wire
+; [env:CameraWebServer]
+; extends = env
+; build_flags = ${env.build_flags}
+
+
+; [env:TX_AH_Rx00p]
+; extends = env
+; build_flags = ${env.build_flags}
+
+; [env:TF_card]
+; extends = env
+; build_flags = ${env.build_flags}
+

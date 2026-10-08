@@ -1,0 +1,590 @@
+
+int32 sys_atcmd_sysdbg(const char *cmd, char *argv[], uint32 argc)
+{
+    char *arg = argv[0];
+    if (argc == 2) {
+        if (os_strcasecmp(arg, "heap") == 0) {
+            sys_status.dbg_heap = (os_atoi(argv[1]) == 1);
+        }
+        if (os_strcasecmp(arg, "top") == 0) {
+            sys_status.dbg_top = os_atoi(argv[1]);
+        }
+        if (os_strcasecmp(arg, "lmac") == 0) {
+            sys_status.dbg_lmac = os_atoi(argv[1]);
+        }
+        if (os_strcasecmp(arg, "umac") == 0) {
+            sys_status.dbg_umac = (os_atoi(argv[1]) == 1);
+        }
+        if (os_strcasecmp(arg, "irq") == 0) {
+            sys_status.dbg_irq = (os_atoi(argv[1]) == 1);
+        }
+        if (os_strcasecmp(arg, "net") == 0) {
+            sys_status.dbg_net = (os_atoi(argv[1]) == 1);
+        }
+        atcmd_ok;
+    } else {
+        atcmd_error;
+    }
+    return 0;
+}
+
+#if SYS_APP_UART_P2P
+/* Аварийный люк для отката прошивки.
+ *
+ * uart_p2p_init() забирает UART1 себе (uart_request_irq + disable_print),
+ * после чего AT-команды на нём мертвы — включая AT+FWUPG. То есть без этого
+ * люка перепрошить модуль обратно можно было бы только вынув флеш-чип из
+ * панельки (docs/Firmware_burn_1.md / _2.md), потому что оба софтовых пути
+ * отката (WNBOTA и NETAT) требуют уже поднявшегося линка.
+ *
+ * Поэтому uart_p2p стартует не сразу, а через UART_P2P_START_DELAY_MS
+ * (см. sys_app_init в main.c). Если в это окно прислать AT+NOP2P, флаг
+ * ниже отменяет запуск НАСОВСЕМ до следующей перезагрузки, и AT-режим
+ * остаётся доступен без ограничения по времени — этого хватает на
+ * AT+FWUPG и минутную передачу по XMODEM.
+ *
+ * Порядок восстановления: обесточить -> подать питание -> в первые
+ * UART_P2P_START_DELAY_MS мс послать AT+NOP2P -> дождаться OK -> AT+FWUPG.
+ */
+static volatile uint8 uart_p2p_inhibit = 0;
+
+static int32 sys_atcmd_nop2p(const char *cmd, char *argv[], uint32 argc)
+{
+    uart_p2p_inhibit = 1;
+    atcmd_ok;
+    return 0;
+}
+
+/*
+ * AT+P2PDEST — кому uart_p2p шлёт видео.
+ *
+ *     AT+P2PDEST=?                     прочитать текущий адрес
+ *     AT+P2PDEST=c6:e8:35:70:7a:68     слать одноадресно
+ *     AT+P2PDEST=ff:ff:ff:ff:ff:ff     вернуть широковещание
+ *
+ * ЗАЧЕМ. Транспорт шлёт кадры на широковещательный адрес. Такие кадры никто
+ * не подтверждает: нет ни повторов, ни обратной связи, а без обратной связи
+ * модуль не может подбирать модуляцию и обязан сидеть на MCS 0. Отсюда и
+ * характер потерь — пакеты пропадают целиком при нулевой порче байтов, потому
+ * что попытка у каждого ровно одна. Подставив MAC получателя, включаем
+ * штатные подтверждения, повторы и автоподбор скорости.
+ *
+ * ПОЧЕМУ НЕЛЬЗЯ ПРОСТО ПЕРЕПИСАТЬ АДРЕС — ошибка 04.09, стоившая модуля.
+ * uart_p2p_task берёт адрес назначения не из своей переменной, а из ОБЩЕЙ
+ * константы broadcast_addr (в сборке 15.09 это 0x20059e50, core_utils.o).
+ * По карте символов её читают ещё двое:
+ *     ieee80211_scan_do_action   — поиск сети,
+ *     ieee80211_ap_build_hdr     — сборка заголовков точки доступа.
+ * Перепиши мы эти шесть байт — камера заговорила бы одноадресно и при этом
+ * перестала бы находить точку доступа и подключаться к ней.
+ *
+ * ЧТО ДЕЛАЕМ ВМЕСТО ЭТОГО. Правим не константу, а УКАЗАТЕЛЬ на неё: слово в
+ * литеральном пуле самой uart_p2p_task (инструкция lrw r8, <broadcast_addr>).
+ * Это слово принадлежит только ей. Код исполняется из ОЗУ — makecode.ini,
+ * CodeLoadToSramAddr=20001000, — поэтому литерал доступен на запись; а lrw
+ * выполняется на каждой отправке, значит переключение действует сразу и без
+ * перезагрузки.
+ *
+ * АДРЕС ЛИТЕРАЛА ИЩЕМ, А НЕ ХАРДКОДИМ: при любой пересборке он уедет. Опора —
+ * uart_p2p_init: он объявлен в lib/net/utils.h, лежит в том же объектном файле
+ * и сразу после uart_p2p_task, так что литерал всегда в нескольких сотнях байт
+ * ПЕРЕД ним. Ищем в этом окне слово, указывающее на шесть байт 0xff, и требуем
+ * ЕДИНСТВЕННОГО совпадения. Не нашлось или нашлось дважды — отказ и печать,
+ * молча не деградируем. Два других читателя константы лежат на 130 КБ дальше
+ * и в окно не попадают.
+ *
+ * ВОЗВРАТ К ШИРОКОВЕЩАНИЮ — не перезаливка, а AT+P2PDEST=ff:ff:ff:ff:ff:ff.
+ * После первой правки литерал всегда смотрит на наш массив, а режим задаётся
+ * его содержимым. Один образ на обе платы, A/B за один цикл питания.
+ */
+static uint8   p2p_dest_mac[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+static uint32 *p2p_dest_lit    = NULL;
+
+#define P2P_LIT_WINDOW 0x400        /* сколько байт перед uart_p2p_init смотреть */
+#define P2P_RAM_LO     0x20000000
+#define P2P_RAM_HI     0x20080000
+
+static uint32 *p2p_find_dest_lit(void)
+{
+    uint32 end   = (uint32)uart_p2p_init;
+    uint32 start = (end - P2P_LIT_WINDOW) & ~3u;
+    uint32 *hit  = NULL;
+    uint32 cnt   = 0;
+    uint32 a;
+
+    for (a = start; a < end; a += 4) {
+        uint32 v = *(volatile uint32 *)a;
+        const uint8 *p;
+
+        if (v < P2P_RAM_LO || v > P2P_RAM_HI - 6) {
+            continue;
+        }
+        p = (const uint8 *)v;
+        if (p[0] == 0xff && p[1] == 0xff && p[2] == 0xff &&
+            p[3] == 0xff && p[4] == 0xff && p[5] == 0xff) {
+            hit = (uint32 *)a;
+            cnt++;
+        }
+    }
+
+    if (cnt != 1) {
+        atcmd_printf("+P2PDEST:literal not found, %u matches in [%08x,%08x)\r\n",
+                     (unsigned)cnt, (unsigned)start, (unsigned)end);
+        return NULL;
+    }
+    atcmd_printf("+P2PDEST:literal at %08x -> %08x\r\n",
+                 (unsigned)(uint32)hit, (unsigned)*hit);
+    return hit;
+}
+
+/* Разбор "xx:xx:xx:xx:xx:xx". str2mac из osal ничего не проверяет, поэтому
+ * форму проверяем сами: иначе опечатка молча превратится в 00:00:00:00:00:00
+ * и уедет в эфир как адрес назначения. */
+static int32 p2p_parse_mac(const char *s, uint8 *mac)
+{
+    uint32 i;
+    uint32 v[6];
+
+    for (i = 0; i < 17; i++) {
+        if (s[i] == 0) {
+            return 0;
+        }
+    }
+    if (s[17] != 0) {
+        return 0;
+    }
+    for (i = 0; i < 5; i++) {
+        if (s[2 + i * 3] != ':') {
+            return 0;
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        const char *p = s + i * 3;
+        uint32 j;
+        v[i] = 0;
+        for (j = 0; j < 2; j++) {
+            char c = p[j];
+            uint32 d;
+            if (c >= '0' && c <= '9') {
+                d = (uint32)(c - '0');
+            } else if (c >= 'a' && c <= 'f') {
+                d = (uint32)(c - 'a') + 10;
+            } else if (c >= 'A' && c <= 'F') {
+                d = (uint32)(c - 'A') + 10;
+            } else {
+                return 0;
+            }
+            v[i] = (v[i] << 4) | d;
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        mac[i] = (uint8)v[i];
+    }
+    return 1;
+}
+
+/* AT+P2PLOG — вернуть печать статистики модуля ПОСЛЕ старта прозрачного режима.
+ *
+ * ЗАЧЕМ. Прошивка умеет печатать по каждой станции строку вида
+ *
+ *     tx0: mcs=*1 snr=74 data=0KB(0kbps) per=0
+ *          bw=2MHz cnt=2 agg=1 ... ack=0KB(2) drop=0KB(0)
+ *     rx0: mcs=5 evm(avg:std)=-31:0 rssi=-5 ... fcsErr=0
+ *
+ * Здесь есть всё, чего не хватало для ответа на главный вопрос: `ack` — счётчик
+ * подтверждений, `per` — доля неудачных передач, `mcs=*` — скорость, ВЫБРАННАЯ
+ * автоподбором (звёздочка означает «авто»). Узнать, что одноадресный пакет не
+ * дошёл, можно только по отсутствию подтверждения, поэтому эти числа прямо
+ * говорят, работают ли ACK.
+ *
+ * ПОЧЕМУ ОНИ НЕ ВИДНЫ. Последним делом uart_p2p_init() вызывает
+ * disable_print(1) — тот самый вызов, что упомянут в комментарии к аварийному
+ * люку выше. Печать замолкает ровно на 30-й секунде, когда транспорт забирает
+ * UART, то есть за мгновение до того, как пойдёт видео. Всё интересное
+ * происходит уже в тишине.
+ *
+ * ЧТО ДЕЛАЕТ КОМАНДА. Заводит периодический таймер, который возвращает
+ * disable_print(0). uart_p2p_init глушит печать ОДИН раз при старте, а наш
+ * таймер тикает постоянно — значит через период после старта транспорта печать
+ * оживает и дальше держится.
+ *
+ *     AT+P2PLOG=?      состояние
+ *     AT+P2PLOG=2000   оживлять печать каждые 2000 мс
+ *     AT+P2PLOG=0      выключить
+ *
+ * КУДА ИДЁТ ТЕКСТ И ЧЕМУ ЭТО ВРЕДИТ. В UART, то есть В СТОРОНУ ESP32 — навстречу
+ * видео. Исходящие кадры не затрагиваются совсем. Но этим же путём приходят
+ * принятые из эфира пакеты, и текст вклинивается между ними: приёмная сторона
+ * увидит мусор, часть пакетов побьётся. На плате КАМЕРЫ это безобидно (теряются
+ * лишь отчёты приёмника, у них своё кадрирование с CRC), а вот на плате
+ * ПРИЁМНИКА этим путём идёт само видео — там команду включать НЕЛЬЗЯ.
+ *
+ * ПО УМОЛЧАНИЮ ВЫКЛЮЧЕНА. Обычный прогон ведёт себя как раньше; это
+ * диагностический режим, а не рабочий.
+ */
+static struct os_timer p2plog_timer;
+static uint8  p2plog_on     = 0;
+static uint16 p2plog_period = 0;
+
+static void p2plog_tick(void *arg)
+{
+    (void)arg;
+    disable_print(0);
+}
+
+/*
+ * 24.09.2026. Счётчики приёма UART модуля (определены в sdk/driver/uart/
+ * hguart.c) и переключатель режима выгребания FIFO.
+ *
+ * Печать идёт отдельной задачей, а не из p2plog_tick: колбэк таймера может
+ * исполняться в контексте, где printf нельзя. Задача заводится при первом
+ * AT+P2PLOG и печатает с тем же периодом. Строка содержит «STA» (UARTSTAT),
+ * чтобы её пропустил строгий фильтр lmacTextByte в скетче камеры.
+ *
+ *   isr  — входов в обработчик приёма
+ *   rx   — байт отдано uart_p2p
+ *   oe   — сколько раз регистр LSR показал ПЕРЕПОЛНЕНИЕ FIFO (потеря байтов)
+ *   cto  — прерываний «таймаут символа»
+ *   lost — байт, выброшенных вендорской веткой CHAR_TIMEOUT
+ *
+ * rx/isr показывает, сколько байт забирается за вход: в режиме вендора это
+ * ровно 1, при выгребании — больше. oe>0 — прямое доказательство потерь.
+ */
+#include "osal/task.h"
+extern volatile uint32 g_uart_isr;
+extern volatile uint32 g_uart_rx;
+extern volatile uint32 g_uart_oe;
+extern volatile uint32 g_uart_cto;
+extern volatile uint32 g_uart_cto_lost;
+extern volatile uint8  g_uart_drain;
+
+static struct os_task uartstat_task;
+static uint8 uartstat_started = 0;
+
+static void uartstat_fn(void *arg)
+{
+    (void)arg;
+    for (;;) {
+        os_sleep_ms(p2plog_period ? p2plog_period : 5000);
+        if (!p2plog_on) {
+            continue;
+        }
+        disable_print(0);
+        hgprintf("UARTSTAT drain=%d isr=%u rx=%u oe=%u cto=%u lost=%u\r\n",
+                 (int)g_uart_drain, (unsigned)g_uart_isr, (unsigned)g_uart_rx,
+                 (unsigned)g_uart_oe, (unsigned)g_uart_cto,
+                 (unsigned)g_uart_cto_lost);
+    }
+}
+
+/* AT+UARTDRAIN=0|1|? — режим приёма в hguart.c, см. комментарий там. */
+static int32 sys_atcmd_uartdrain(const char *cmd, char *argv[], uint32 argc)
+{
+    if (argc != 1) {
+        atcmd_error;
+        return 0;
+    }
+    if (argv[0][0] != '?') {
+        g_uart_drain = os_atoi(argv[0]) ? 1 : 0;
+    }
+    atcmd_printf("+UARTDRAIN:%d\r\n", (int)g_uart_drain);
+    atcmd_ok;
+    return 0;
+}
+
+static int32 sys_atcmd_p2plog(const char *cmd, char *argv[], uint32 argc)
+{
+    int v;
+
+    if (argc != 1) {
+        atcmd_error;
+        return 0;
+    }
+    if (argv[0][0] == '?') {
+        atcmd_printf("+P2PLOG:%s period=%u ms\r\n",
+                     p2plog_on ? "on" : "off", (unsigned)p2plog_period);
+        atcmd_ok;
+        return 0;
+    }
+
+    v = os_atoi(argv[0]);
+    if (v <= 0) {
+        if (p2plog_on) {
+            os_timer_stop(&p2plog_timer);
+            p2plog_on = 0;
+        }
+        atcmd_printf("+P2PLOG:off\r\n");
+        atcmd_ok;
+        return 0;
+    }
+
+    /* Нижняя граница бережёт канал: печать идёт по тому же UART, по которому
+     * приходят пакеты из эфира, и слишком частая вытеснит их совсем. */
+    if (v < 500)   v = 500;
+    if (v > 60000) v = 60000;
+
+    if (!p2plog_on) {
+        os_timer_init(&p2plog_timer, p2plog_tick, OS_TIMER_MODE_PERIODIC, NULL);
+        p2plog_on = 1;
+        if (!uartstat_started) {
+            uartstat_started = 1;
+            OS_TASK_INIT("uartstat", &uartstat_task, uartstat_fn, 0,
+                         OS_TASK_PRIORITY_LOW, 1024);
+        }
+    } else {
+        os_timer_stop(&p2plog_timer);
+    }
+    p2plog_period = (uint16)v;
+    os_timer_start(&p2plog_timer, (unsigned long)v);
+
+    atcmd_printf("+P2PLOG:on period=%d ms\r\n", v);
+    atcmd_ok;
+    return 0;
+}
+
+static int32 sys_atcmd_p2pdest(const char *cmd, char *argv[], uint32 argc)
+{
+    uint8 mac[6];
+    uint32 i;
+    uint32 zero = 1;
+
+    if (argc != 1) {
+        atcmd_error;
+        return 0;
+    }
+
+    if (argv[0][0] == '?') {
+        atcmd_printf("+P2PDEST:%02x:%02x:%02x:%02x:%02x:%02x patched=%d\r\n",
+                     p2p_dest_mac[0], p2p_dest_mac[1], p2p_dest_mac[2],
+                     p2p_dest_mac[3], p2p_dest_mac[4], p2p_dest_mac[5],
+                     p2p_dest_lit ? 1 : 0);
+        atcmd_ok;
+        return 0;
+    }
+
+    if (!p2p_parse_mac(argv[0], mac)) {
+        atcmd_printf("+P2PDEST:bad mac, need xx:xx:xx:xx:xx:xx\r\n");
+        atcmd_error;
+        return 0;
+    }
+    for (i = 0; i < 6; i++) {
+        if (mac[i]) {
+            zero = 0;
+        }
+    }
+    if (zero) {
+        atcmd_printf("+P2PDEST:refusing all-zero mac\r\n");
+        atcmd_error;
+        return 0;
+    }
+
+    /* Сначала заполняем массив, и только потом переводим на него указатель:
+     * иначе uart_p2p_task успела бы прочитать полупустой адрес. */
+    os_memcpy(p2p_dest_mac, mac, 6);
+
+    if (p2p_dest_lit == NULL) {
+        p2p_dest_lit = p2p_find_dest_lit();
+        if (p2p_dest_lit == NULL) {
+            atcmd_error;
+            return 0;
+        }
+        *p2p_dest_lit = (uint32)p2p_dest_mac;
+    }
+
+    atcmd_printf("+P2PDEST:%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+                 p2p_dest_mac[0], p2p_dest_mac[1], p2p_dest_mac[2],
+                 p2p_dest_mac[3], p2p_dest_mac[4], p2p_dest_mac[5]);
+    atcmd_ok;
+    return 0;
+}
+#endif
+
+static const struct hgic_atcmd static_atcmds[] = {
+    { "AT+RST", sys_atcmd_reset },
+    { "AT+SYSDBG", sys_atcmd_sysdbg },
+    { "AT+LOADDEF", sys_atcmd_loaddef },
+#if SYS_APP_UART_P2P
+    { "AT+NOP2P", sys_atcmd_nop2p },
+    { "AT+P2PDEST", sys_atcmd_p2pdest },
+    { "AT+P2PLOG",  sys_atcmd_p2plog },
+    { "AT+UARTDRAIN", sys_atcmd_uartdrain },
+#endif
+
+    /*TESTMODE ATCMD*/
+    { "AT+ACS_START", atcmd_acs_start_hdl },
+    { "AT+ACK_TO", atcmd_ack_to_extra_hdl },
+    { "AT+ADC_DUMP", atcmd_adc_dump_hdl },
+    { "AT+AP_SLEEP_MODE", atcmd_ap_sleep_mode },
+    { "AT+ANT_DUAL", atcmd_ant_dual_hdl },
+    { "AT+ANT_CTRL", atcmd_ant_ctrl_hdl },
+    { "AT+ANT_AUTO", atcmd_ant_auto_hdl },
+    { "AT+ANT_DEF", atcmd_ant_def_hdl },
+    { "AT+BGRSSI_MARGIN", atcmd_bgrssi_margin_hdl },
+    { "AT+BGRSSI_SPUR", atcmd_bgrssi_spur_hdl },
+    //{ "AT+BSS_BW", atcmd_bss_bw_hdl },
+    { "AT+BUS_WT", atcmd_bus_wt_hdl },
+    { "AT+CCA_OBSV", atcmd_cca_obsv_hdl },
+    { "AT+CCA_CE", atcmd_cca_ce_hdl },
+    { "AT+CCMP_SUPPORT", atcmd_ccmp_support_hdl },
+    { "AT+CHAN_SCAN", atcmd_chan_scan_hdl },
+    { "AT+CS_CNT", atcmd_cs_cnt_hdl },
+    { "AT+CS_EN", atcmd_cs_enable_hdl },
+    { "AT+CS_NUM", atcmd_cs_num_hdl },
+    { "AT+CS_PERIOD", atcmd_cs_period_hdl },
+    { "AT+CS_TH", atcmd_cs_th_hdl },
+    { "AT+CTS_DUP", atcmd_cts_dup_hdl },
+    { "AT+EDCA_AIFS", atcmd_edca_aifs_hdl },
+    { "AT+EDCA_CW", atcmd_edca_cw_hdl },
+    { "AT+EDCA_TXOP", atcmd_edca_txop_hdl },
+    { "AT+AP_BACKOFF", atcmd_edca_ap_backoff_hdl },
+    { "AT+EVM_MARGIN", atcmd_evm_margin_hdl },
+    { "AT+FREQ_LIST", atcmd_freq_list_hdl },
+#if !defined (TX4001A)
+    { "AT+FT_ATT", atcmd_ft_att_hdl },
+#endif
+    { "AT+LMAC_DBGSEL", atcmd_lmac_dbgsel_hdl },
+    { "AT+LO_FREQ", atcmd_lo_freq_hdl },
+    //{ "AT+LOADDEF", atcmd_loaddef_hdl },
+    { "AT+MAC_ADDR", atcmd_mac_addr_hdl },
+    { "AT+MCAST_DUP", atcmd_mcast_dup_hdl },
+    { "AT+MCAST_REORDER", atcmd_mcast_reorder_hdl },
+    { "AT+MCAST_BW", atcmd_mcast_bw_hdl },
+    { "AT+MCAST_MCS", atcmd_mcast_mcs_hdl },
+    { "AT+MCAST_RTS", atcmd_mcast_rts_hdl },
+    { "AT+NOR_RD", atcmd_nor_rd_hdl },
+    { "AT+OBSS_CCA_DIFF", atcmd_obss_cca_diff_hdl },
+    { "AT+OBSS_EDCA", atcmd_obss_edca_hdl },
+    { "AT+OBSS_NAV_DIFF", atcmd_obss_nav_diff_hdl },
+    { "AT+OBSS_SWITCH", atcmd_obss_switch_hdl },
+    { "AT+OBSS_TH", atcmd_obss_th_hdl },
+    { "AT+PCF_EN", atcmd_pcf_en_hdl },
+    { "AT+PCF_PERCENT", atcmd_pcf_percent_hdl },
+    { "AT+PCF_PERIOD", atcmd_pcf_period_hdl },
+    { "AT+PHY_RESET", atcmd_phy_reset_hdl },
+    { "AT+PRI_CHAN", atcmd_set_pri_chan_hdl },
+    { "AT+PRINT_PERIOD", atcmd_lmac_print_period_hdl },
+    { "AT+QA_ATT", atcmd_qa_att_hdl },
+    { "AT+QA_CFG", atcmd_qa_cfg_hdl },
+    { "AT+QA_RESULTS", atcmd_qa_results_hdl },
+    { "AT+QA_RXTHD", atcmd_qa_rxthd_hdl },
+    { "AT+QA_START", atcmd_qa_start_hdl },
+    { "AT+QA_TXTHD", atcmd_qa_txthd_hdl },
+    { "AT+RC_NEW", atcmd_rc_new_hdl },
+    { "AT+REG_RD", atcmd_reg_rd_hdl },
+    { "AT+REG_WT", atcmd_reg_wt_hdl },
+    //{ "AT+REBOOT", atcmd_reboot_hdl },
+    { "AT+RF_RESET", atcmd_rf_reset_hdl },
+    { "AT+RTS_DUP", atcmd_rts_dup_hdl },
+    { "AT+RX_AGC", atcmd_rx_agc_rd_hdl },
+    { "AT+RX_ERR", atcmd_rx_err_rd_hdl },
+    { "AT+RX_EVM", atcmd_rx_evm_rd_hdl },
+    { "AT+RX_PKTS", atcmd_rx_pkts_rd_hdl },
+    { "AT+RX_REORDER", atcmd_rx_ordered_hdl },
+    { "AT+RX_RSSI", atcmd_rx_rssi_rd_hdl },
+    //{ "AT+RX_ADDR_FILTER", atcmd_rx_addr_filter_hdl },
+    //{ "AT+RX_PHY_CHECK", atcmd_rx_phy_check_hdl },
+    { "AT+SET_AGC", atcmd_set_agc_hdl },
+    { "AT+SET_AGC_TH", atcmd_set_agc_threshold_hdl },
+    { "AT+SET_BGRSSI", atcmd_set_bgrssi_hdl },
+    { "AT+SET_BGRSSI_AVG", atcmd_set_bgrssi_avg_hdl },
+    { "AT+SET_RTS", atcmd_set_rts_hdl },
+    { "AT+SHORT_GI", atcmd_short_gi_hdl },
+    { "AT+SHORT_TH", atcmd_short_th_hdl },
+    { "AT+SLEEP_EN", atcmd_sleep_en_hdl },
+    { "AT+T_SENSOR", atcmd_t_sensor_hdl },
+    { "AT+TEST_START", atcmd_test_start_hdl },
+    { "AT+TX_AGG_AUTO", atcmd_agg_auto_hdl },
+    { "AT+TX_ATTN", atcmd_tx_attn_hdl },
+    { "AT+TX_CW", atcmd_tx_cw_hdl },
+    { "AT+TX_BW", atcmd_tx_bw_hdl },
+    { "AT+TX_BW_DYNAMIC", atcmd_tx_bw_dynamic_hdl },
+    { "AT+TX_CNT_MAX", atcmd_tx_cnt_max_hdl },
+    { "AT+TX_CONT", atcmd_tx_cont_hdl },
+    { "AT+TX_DELAY", atcmd_tx_delay_hdl },
+    { "AT+TX_DST_ADDR", atcmd_tx_dst_addr_hdl },
+    { "AT+TX_FAIL", atcmd_tx_fail_rd_hdl },
+    { "AT+TX_FC", atcmd_tx_fc_hdl },
+    { "AT+TX_FLAGS", atcmd_tx_flags_hdl },
+    { "AT+TX_LEN", atcmd_tx_len_hdl },
+    { "AT+TX_MAX_AGG", atcmd_tx_max_agg_hdl },
+    { "AT+TX_MAX_SYMS", atcmd_tx_max_syms_hdl },
+    { "AT+TX_MCS", atcmd_tx_mcs_hdl },
+    { "AT+TX_MCS_MAX", atcmd_tx_mcs_max_hdl },
+    { "AT+TX_MCS_MIN", atcmd_tx_mcs_min_hdl },
+    { "AT+TX_ORDERED", atcmd_strictly_ordered_hdl },
+    { "AT+TX_PHA_AMP", atcmd_tx_pha_amp_hdl },
+    { "AT+TX_PKTS", atcmd_tx_pkts_rd_hdl },
+    { "AT+TX_PWR_AUTO", atcmd_tx_pwr_auto_hdl },
+    { "AT+TX_PWR_MAX", atcmd_tx_pwr_max_hdl },
+    { "AT+TX_PWR_SUPER", atcmd_tx_pwr_super_hdl },
+    { "AT+TX_PWR_SUPER_TH", atcmd_tx_pwr_super_th_hdl },
+    { "AT+TX_RATE_FIXED", atcmd_tx_rate_fixed_hdl },
+    { "AT+TX_START", atcmd_tx_start_hdl },
+    { "AT+TX_STEP", atcmd_tx_step_hdl },
+    { "AT+TX_TRIG", atcmd_tx_trig_hdl },
+    { "AT+TX_TYPE", atcmd_tx_type_hdl },
+    { "AT+TXOP_EN", atcmd_txop_en_hdl },
+    { "AT+TX_TRV_PILOT_EN", atcmd_tx_trv_pilot_en_hdl },
+    { "AT+WAKE_EN", atcmd_wake_stas_hdl },
+    { "AT+XO_CS", atcmd_xo_cs_hdl },
+    { "AT+XO_CS_AUTO", atcmd_xo_cs_auto_hdl },
+    { "AT+LO_TABLE", atcmd_lo_table_read_hdl },
+    { "AT+PS_CHECK", atcmd_ps_check_hdl },
+    { "AT+RADIO_ONOFF", atcmd_radio_onoff_hdl },
+    { "AT+STA_INFO", atcmd_sta_info_hdl },
+    { "AT+TXPOWER", atcmd_txpower_hdl },
+    { "AT+SET_VDD13", atcmd_set_vdd13_hdl },
+    { "AT+SMT_DAT", atcmd_smt_dat_hdl },
+
+    { "AT+SYSCFG", sys_syscfg_dump_hdl },
+    { "AT+FWUPG", xmodem_fwupgrade_hdl },
+    { "AT+SSID", sys_wifi_atcmd_set_ssid },
+    { "AT+KEY", sys_wifi_atcmd_set_key },
+    { "AT+PSK", sys_wifi_atcmd_set_psk },
+    { "AT+ENCRYPT", sys_wifi_atcmd_set_encrypt },
+    { "AT+WIFIMODE", sys_wifi_atcmd_set_wifimode },
+    { "AT+CHANNEL", sys_wifi_atcmd_set_channel },
+    { "AT+APHIDE", sys_wifi_atcmd_aphide },
+    { "AT+SCAN", sys_wifi_atcmd_scan },
+    { "AT+PAIR", sys_wifi_atcmd_pair },    
+    { "AT+ICMPMNTR", sys_atcmd_icmp_mntr},
+    { "AT+RSSI", sys_wifi_atcmd_get_rssi},
+    
+    { "AT+ROAM", sys_wifi_atcmd_roam},
+#if SYS_NETWORK_SUPPORT && LWIP_RAW
+    { "AT+PING", sys_atcmd_ping},
+#endif
+#if SYS_NETWORK_SUPPORT
+    { "AT+IPERF2", sys_atcmd_iperf2},
+#endif
+#if WIFI_REPEATER_SUPPORT
+    { "AT+R_SSID", sys_wifi_atcmd_set_rssid },
+    { "AT+R_KEY", sys_wifi_atcmd_set_rkey },
+    { "AT+R_PSK", sys_wifi_atcmd_set_rpsk },
+#endif
+    // AH特有
+    { "AT+BSS_BW", sys_wifi_atcmd_bss_bw },
+    { "AT+CHAN_LIST", sys_wifi_atcmd_chan_list },
+    { "AT+WAKEUP", sys_wifi_atcmd_wakeup },
+    { "AT+VERSION", sys_wifi_atcmd_version },
+
+#ifdef CONFIG_SLEEP
+    { "AT+AP_PSMODE", sys_wifi_atcmd_ap_psmode },
+    { "AT+DSLEEP", sys_wifi_atcmd_dsleep },
+#endif
+
+    { "AT+SET_WMM", sys_wifi_atcmd_set_wmm_param },
+
+};
+
+__init void sys_atcmd_init(void)
+{
+    struct atcmd_settings setting;
+    os_memset(&setting, 0, sizeof(setting));
+    setting.args_count = ATCMD_ARGS_COUNT;
+    setting.printbuf_size = ATCMD_PRINT_BUF_SIZE;
+    setting.static_atcmds = static_atcmds;
+    setting.static_cmdcnt = ARRAY_SIZE(static_atcmds);
+    atcmd_uart_init(ATCMD_UARTDEV, 115200, 5, &setting);
+}
+

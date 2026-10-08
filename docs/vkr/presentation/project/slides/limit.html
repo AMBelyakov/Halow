@@ -1,0 +1,23 @@
+<section id="limit" data-transition="fade" style="background:#ECEAE3; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Ограничивает не радиоканал, а интерфейс</h2>
+<div style="display:flex; gap:32px">
+<div style="flex:1; background:#FDFCFA; border:1px solid #E0DDD4; border-radius:16px; padding:40px; display:flex; flex-direction:column; gap:8px">
+<p style="font-size:120px; font-weight:700; line-height:1.0; color:#14213D">13,5</p>
+<p style="font-size:32px; font-weight:600; color:#14213D">Мбит/с</p>
+<p style="font-size:24px; line-height:1.4; color:#4A5568">радиоканал 4 МГц, MCS 7 — расчёт по стандарту</p>
+</div>
+<div style="flex:1; background:#FDFCFA; border:1px solid #E0DDD4; border-radius:16px; padding:40px; display:flex; flex-direction:column; gap:8px">
+<p style="font-size:120px; font-weight:700; line-height:1.0; color:#2A78D6">3,94</p>
+<p style="font-size:32px; font-weight:600; color:#14213D">Мбит/с</p>
+<p style="font-size:24px; line-height:1.4; color:#4A5568">предел UART при 5 Мбод — потолок ESP32-S3, недостижим обходом</p>
+</div>
+<div style="flex:1; background:#FDFCFA; border:1px solid #E0DDD4; border-radius:16px; padding:40px; display:flex; flex-direction:column; gap:8px">
+<p style="font-size:120px; font-weight:700; line-height:1.0; color:#14213D">0,71</p>
+<p style="font-size:32px; font-weight:600; color:#14213D">Мбит/с</p>
+<p style="font-size:24px; line-height:1.4; color:#4A5568">достигнуто на стенде; дальше ограничивает программное сжатие</p>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">Пауза дороже скорости интерфейса: при 3 Мбод пауза 3 мс занимает 39 % времени линии.</p>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 11 / 17</p>
+<aside>Три числа. Радиоканал по стандарту способен на 13,5 Мбит/с. Через UART, даже на предельных для ESP32-S3 пяти мегабодах, пройдёт не больше 3,94 Мбит/с — это арифметика формата 8N1. На стенде достигнуто 0,71, и дальше ограничивает программное сжатие JPEG. Вывод: узкое место — интерфейс между процессором и модемом, а не радио.</aside>
+</section>

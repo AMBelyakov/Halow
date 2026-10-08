@@ -1,5 +1,3 @@
-
-
 #include "utilities.h"
 #include <SPI.h>
 #include <Wire.h>
@@ -27,56 +25,6 @@ camera_config_t config;
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 SemaphoreHandle_t debuglock;
 
-//************************************[ SSD1306 ]******************************************
-bool ssd1306_init(void)
-{
-    Serial.println("OLED FeatherWing test");
-    Wire.beginTransmission(0x3C);
-    if (Wire.endTransmission() == 0)
-    {
-        display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-        return true;
-    }
-    return false;
-}
-//************************************[ SDCARD ]******************************************
-bool sdcard_init(void)
-{
-    if (!SD.begin(TF_SPI_CS))
-    {
-        Serial.println("Card Mount Failed");
-        return false;
-    }
-    uint8_t cardType = SD.cardType();
-
-    if (cardType == CARD_NONE)
-    {
-        Serial.println("No SD card attached");
-        return false;
-    }
-    Serial.print("SD Card Type: ");
-    if (cardType == CARD_MMC)
-    {
-        Serial.println("MMC");
-    }
-    else if (cardType == CARD_SD)
-    {
-        Serial.println("SDSC");
-    }
-    else if (cardType == CARD_SDHC)
-    {
-        Serial.println("SDHC");
-    }
-    else
-    {
-        Serial.println("UNKNOWN");
-    }
-
-    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-    Serial.printf("SD Card Size: %lluMB\n", cardSize);
-
-    return true;
-}
 
 //************************************[ TX-AH ]******************************************
 #if 1
@@ -129,19 +77,6 @@ void sendAT(String s)
 bool TX_AH_init(void)
 {
     int at_cnt = 0;
-    // sendAT("+SYSDBG=LMAC,0");
-    // waitResponse() == AH_Rx00P_RESPONE_OK ? at_cnt : at_cnt++;
-    // sendAT("+BSS_BW=8");
-    // waitResponse() == AH_Rx00P_RESPONE_OK ? at_cnt : at_cnt++;
-
-    // sendAT("+SYSDBG=LMAC,0");
-    // if(waitResponse() == AH_Rx00P_RESPONE_OK) SerialMon.println("AT+SYSDBG SUCCEED");
-    // else SerialMon.println("AT+SYSDBG ERROR");
-
-    // sendAT("+BSS_BW=8");
-    // if(waitResponse() == AH_Rx00P_RESPONE_OK) SerialMon.println("AT+BSS_BW SUCCEED");
-    // else SerialMon.println("AT+BSS_BW FAILD");
-
 
     sendAT("+SYSDBG=LMAC,0");
     if (waitResponse() == AH_Rx00P_RESPONE_OK)
@@ -212,13 +147,11 @@ bool camera_init(void)
         }
         else
         {
-            // Limit the frame size when PSRAM is not available
             config.frame_size = FRAMESIZE_SVGA;
             config.fb_location = CAMERA_FB_IN_DRAM;
         }
     }
 
-    // camera init
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK)
     {
@@ -227,60 +160,19 @@ bool camera_init(void)
     }
     return true;
 }
-//************************************[ Other fun ]******************************************
-char *line_align(char *buf, const char *str1, const char *str2)
-{
-    int max_line_size = BUF_MAX_LEN - 1;
-    int16_t w2 = strlen(str2);
-    int16_t w1 = max_line_size - w2;
-    snprintf(buf, BUF_MAX_LEN, "%-*s%-*s", w1, str1, w2, str2);
-    return buf;
-}
 
-bool tx_ah_conn_status = false;
-char rssi_buf[16];
 
-void lcd_info_show(void)
-{
-    if (ssd1306_ret == false)
-    {
-        Serial.println("******************************");
-        Serial.println((tx_ah_ret == true ? "TX-AH   PASS" : "TX-AH    ---"));
-        Serial.println((ssd1306_ret == true ? "SSD1306 PASS" : "SSD1306  ---"));
-        Serial.println((sdcard_ret == true ? "SDCard  PASS" : "SDCard   ---"));
-        Serial.println((camera_ret == true ? "CAMERA  PASS" : "CAMERA   ---"));
-        Serial.println(" ");
-
-        Serial.println(line_align(buf, "Role:", "STA "));
-
-        if (tx_ah_conn_status) {
-            Serial.println(line_align(buf, "RSSI:", rssi_buf));
-        } else {
-            Serial.println("Disconnect!!!");
-        }
+// ========== ФУНКЦИЯ ОТПРАВКИ КАДРА ==========
+void sendFrame(camera_fb_t *fb) {
+    int len = fb->len;
+    char cmd[32];
+    snprintf(cmd, sizeof(cmd), "+TXDATA=%d", len);
+    sendAT(cmd);
+    if (waitResponse(2000) == AH_Rx00P_RESPONE_OK) {
+        SerialAT.write(fb->buf, len);
+        Serial.printf("Frame sent: %d bytes\n", len);
     } else {
-        // Clear the buffer.
-        display.clearDisplay();
-        display.display();
-        display.setTextSize(1);
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(0, 0);
-        display.println(line_align(buf, "LCD:", (ssd1306_ret == true ? "PASS" : "---")));
-        display.println(line_align(buf, "SD:", (sdcard_ret == true ? "PASS" : "---")));
-        display.println(line_align(buf, "CAM:", (camera_ret == true ? "PASS" : "---")));
-        display.println(line_align(buf, "AH:", (tx_ah_ret == true ? "PASS" : "---")));
-        display.println("---------------------");
-
-        display.println(line_align(buf, "Role:", "STA"));
-
-        if (tx_ah_conn_status) {
-            display.println(line_align(buf, "RSSI:", rssi_buf));
-            display.println(line_align(buf, "Recv:", recv_data));
-        } else {
-            display.println("Disconnect!!!");
-        }
-        
-        display.display();
+        Serial.println("Send command failed");
     }
 }
 
@@ -303,14 +195,14 @@ void setup()
     sdcard_ret = sdcard_init();
     tx_ah_ret = TX_AH_init();
 
-    // if (ssd1306_ret)
-    // {
-        lcd_info_show();
-    // }
+    lcd_info_show();
+    pinMode(BOARD_LED, OUTPUT);
 }
 
 uint32_t last_tick = 0;
 uint32_t rssi_tick = 0;
+uint32_t lastFrame = 0;
+const uint32_t FRAME_INTERVAL_MS = 500;   // 2 кадра в секунду
 
 String recv_str = "";
 int indx = 0;
@@ -352,33 +244,28 @@ void loop()
         lcd_info_show();
     }
 
-    while (SerialAT.available())
-    {
-        // SerialMon.write(SerialAT.read());
+    // ---------- ЗАХВАТ И ОТПРАВКА КАДРА ----------
+    if (tx_ah_conn_status && camera_ret) {
+        if (millis() - lastFrame >= FRAME_INTERVAL_MS) {
+            lastFrame = millis();
 
-        recv_str += (char)SerialAT.read();
-        // SerialMon.write(recv_str.c_str());
+            camera_fb_t *fb = esp_camera_fb_get();
+            if (fb) {
+                sendFrame(fb);
+                esp_camera_fb_return(fb);
+            } else {
+                Serial.println("Frame capture failed");
+            }
+        }
     }
-    while (SerialMon.available())
-    {
+
+    // Обработка входящих данных от AP (необязательно, можно оставить для отладки)
+    while (SerialAT.available()) {
+        SerialMon.write(SerialAT.read());
+    }
+    while (SerialMon.available()) {
         SerialAT.write(SerialMon.read());
     }
 
-    if(recv_str.equals("") == 0) {
-        if(recv_str.startsWith("+RXDATA:")) {
-            char *p = (char *)recv_str.c_str();
-
-            while (*p != '\n')
-            {
-                *p++;
-            }
-            
-            Serial.print("recv:");
-            Serial.println((p+15));
-            memcpy(recv_data, (p+15), 128);
-        }
-        SerialMon.write(recv_str.c_str());
-        recv_str = "";
-    }
     delay(1);
 }

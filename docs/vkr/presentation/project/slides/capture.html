@@ -1,0 +1,17 @@
+<section id="capture" data-transition="fade" style="background:#F7F6F2; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Искажение кадров — наводка собственного передатчика</h2>
+<div style="display:flex; gap:64px; align-items:start">
+<div style="display:flex; gap:64px">
+<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:120px; font-weight:700; line-height:1.05; color:#2A78D6">0 %</p><p style="font-size:24px; line-height:1.4; color:#4A5568">повреждённых кадров при 1 дБм (0 из 720)</p></div>
+<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:120px; font-weight:700; line-height:1.05; color:#D2551F">44 %</p><p style="font-size:24px; line-height:1.4; color:#4A5568">при 20 дБм (512 из 1151) — всё остальное то же</p></div>
+</div>
+<div style="flex:1; background:#FDFCFA; border:1px solid #E0DDD4; border-radius:16px; padding:40px; display:flex; flex-direction:column; gap:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#14213D">Программное исправление</h3>
+<p style="font-size:24px; line-height:1.4; color:#4A5568">30 сохранённых кадров: 16 не тронуто, 12 вылечено, 0 испорчено</p>
+<p style="font-size:24px; line-height:1.4; color:#4A5568">На стенде: 14,8 целых кадров в секунду против 8,1 без исправления</p>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">На границе дальности мощность максимальна — поэтому захват должен выдерживать её, а не уходить от неё.</p>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 12 / 17</p>
+<aside>Часть кадров приходила с радугой: в потоке с камеры терялся один байт. Долго искали причину в шлейфе и тактировании. Опыт, где менялась только мощность передатчика, дал ответ: при 1 дБм повреждений ноль, при 20 дБм — 44 процента. Это наводка антенны на шлейф камеры в нескольких сантиметрах. Разработано программное исправление без порогов, проверенное на 30 сохранённых кадрах по независимой метрике; на стенде оно почти вдвое увеличивает число целых кадров.</aside>
+</section>
