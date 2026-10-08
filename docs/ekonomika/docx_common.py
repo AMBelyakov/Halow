@@ -2,9 +2,12 @@
 """Общая вёрстка разделов ВКР (ГОСТ-подобное оформление) на python-docx.
 
 Формулы — нативные формулы Word (OMML). Ссылки на источники пишутся в тексте
-как «[@ключ]» или «[@a; @b]» и нумеруются при сохранении по порядку первого
-упоминания; список источников строится из словаря ключ -> описание.
+как «[@ключ]» или «[@a; @b]». Нумерация сквозная по всей ВКР: порядок задаёт
+docs/vkr/build_all.py (сначала основная часть, затем главы 4 и 5) и пишет его в
+docs/vkr/sources_order.json; единый список источников — в конце основной части.
 """
+import json
+import os
 import re
 from xml.sax.saxutils import escape
 
@@ -19,6 +22,45 @@ from docx.shared import Cm, Mm, Pt, RGBColor
 NBSP = " "
 TEXT_W = 165  # мм: A4 210 - 30 - 15
 LEFT, CENTER, RIGHT = WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.RIGHT
+
+
+VKR_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "vkr"))
+ORDER_FILE = os.path.join(VKR_DIR, "sources_order.json")
+CITES_DIR = os.path.join(VKR_DIR, "cites")
+_REF = re.compile(r"\[@([^\]]+)\]")
+
+
+def number_refs(doc, sources, chapter):
+    """Заменяет «[@a; @b]» сквозными номерами «[3, 7]» (по возрастанию) по общему порядку
+    из sources_order.json. Ключ, которого там ещё нет, получает временный номер после
+    известных — build_all.py пересоберёт главу с окончательной нумерацией. Порядок первых
+    упоминаний главы пишется в cites/<chapter>.json. Возвращает этот порядок."""
+    try:
+        with open(ORDER_FILE, encoding="utf-8") as f:
+            num = json.load(f)
+    except FileNotFoundError:
+        num = {}
+    cited = []
+
+    def repl(mo):
+        nums = []
+        for k in (x.strip().lstrip("@") for x in mo.group(1).split(";")):
+            if k not in sources:
+                raise KeyError(f"нет источника «{k}»")
+            if k not in cited:
+                cited.append(k)
+            if k not in num:
+                num[k] = max(num.values(), default=0) + 1
+            nums.append(num[k])
+        return "[" + ", ".join(str(x) for x in sorted(set(nums))) + "]"
+
+    for t in doc.element.body.iter(qn("w:t")):
+        if t.text and "[@" in t.text:
+            t.text = _REF.sub(repl, t.text)
+    os.makedirs(CITES_DIR, exist_ok=True)
+    with open(os.path.join(CITES_DIR, f"{chapter}.json"), "w", encoding="utf-8") as f:
+        json.dump(cited, f, ensure_ascii=False, indent=1)
+    return cited
 
 
 def n(x, d=0):
@@ -127,7 +169,20 @@ class VkrDoc:
         sec.top_margin, sec.bottom_margin = Mm(20), Mm(20)
         self.sec = sec
 
+        # язык документа — русский (проверка орфографии и переносы в Word)
+        for rpr in d.styles.element.iter(qn("w:rPr")):
+            lang = rpr.find(qn("w:lang"))
+            if lang is not None:
+                for a in ("w:val", "w:eastAsia", "w:bidi"):
+                    lang.set(qn(a), "ru-RU")
         normal = d.styles["Normal"]
+        nl = normal.element.get_or_add_rPr()
+        lang = nl.find(qn("w:lang"))
+        if lang is None:
+            lang = OxmlElement("w:lang")
+            nl.append(lang)
+        lang.set(qn("w:val"), "ru-RU")
+        lang.set(qn("w:eastAsia"), "ru-RU")
         _set_font(normal, 14)
         pf = normal.paragraph_format
         pf.first_line_indent = Cm(1.25)
@@ -140,8 +195,8 @@ class VkrDoc:
             st = d.styles[f"Heading {lvl}"]
             _set_font(st, size, bold=True)
             hp = st.paragraph_format
-            hp.alignment = CENTER
-            hp.first_line_indent = Cm(0)
+            hp.alignment = LEFT
+            hp.first_line_indent = Cm(1.25)
             hp.line_spacing = 1.5
             hp.space_before, hp.space_after = Pt(12), Pt(6)
             hp.keep_with_next = True
@@ -170,7 +225,13 @@ class VkrDoc:
 
     # ---------------------------------------------------------- текст
     def H(self, text, level):
-        return self.doc.add_heading(text, level)
+        """Нумерованный заголовок — с абзацного отступа (ГОСТ 7.32); структурный элемент
+        без номера (Введение, Заключение, Список…) — по центру."""
+        h = self.doc.add_heading(text, level)
+        if not re.match(r"\d", text):
+            h.paragraph_format.alignment = CENTER
+            h.paragraph_format.first_line_indent = Cm(0)
+        return h
 
     def para(self, *parts, indent=True, align=None, keep=False):
         """parts: str | ('m', oMath) | ('b', str) | ('h', str — выделить жёлтым)."""
@@ -340,29 +401,9 @@ class VkrDoc:
             run._r.append(el)
 
     # ---------------------------------------------------------- источники
-    def finalize(self, sources, title, out):
-        """Нумерует ссылки [@key] по первому упоминанию, добавляет список, сохраняет."""
-        order = {}
-        tok = re.compile(r"\[@([^\]]+)\]")
-
-        def repl(mo):
-            keys = [k.strip().lstrip("@") for k in mo.group(1).split(";")]
-            nums = []
-            for k in keys:
-                if k not in sources:
-                    raise KeyError(f"нет источника «{k}»")
-                order.setdefault(k, len(order) + 1)
-                nums.append(order[k])
-            return "[" + "; ".join(f"{self.pref}{x}" for x in nums) + "]"
-
-        for t in self.doc.element.body.iter(qn("w:t")):
-            if t.text and "[@" in t.text:
-                t.text = tok.sub(repl, t.text)
-        unused = set(sources) - set(order)
-        self.H(title, 2)
-        self.para(f"(номера [{self.pref}1]–[{self.pref}{len(order)}] привести к сквозной нумерации "
-                  "общего списка использованных источников)", indent=False, align=CENTER)
-        for k, num in sorted(order.items(), key=lambda kv: kv[1]):
-            self.para(f"[{self.pref}{num}] {sources[k]}", indent=False, align=LEFT)
+    def finalize(self, sources, chapter, out):
+        """Нумерует ссылки сквозными номерами ВКР и сохраняет. Своего списка у раздела нет:
+        все источники — в «Списке использованных источников» в конце ВКР."""
+        cited = number_refs(self.doc, sources, chapter)
         self.doc.save(out)
-        return order, unused
+        return cited, set(sources) - set(cited)

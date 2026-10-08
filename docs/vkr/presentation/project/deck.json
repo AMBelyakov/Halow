@@ -9,15 +9,15 @@
  "order": [
   "cover",
   "relevance",
-  "niche",
   "goal",
-  "whyexp",
+  "niche",
   "theory",
+  "whyexp",
   "stand",
   "program",
-  "bandwidth",
   "throughput",
   "limit",
+  "release",
   "capture",
   "field",
   "integration",
@@ -27,19 +27,23 @@
  ],
  "sections": {
   "intro": {
-   "description": "Почему для БПЛА нужен Wi-Fi HaLow: ниша, цель и задачи",
+   "description": "Актуальность: БПЛА как удалённый источник данных, цель, критерии и задачи",
    "start": "cover"
   },
+  "analysis": {
+   "description": "Сравнительный анализ протоколов связи с БПЛА",
+   "start": "niche"
+  },
   "method": {
-   "description": "Обоснование эксперимента, теоретическая оценка, стенд и программа",
+   "description": "Обоснование эксперимента, выбор аппаратной части, программа и методика",
    "start": "whyexp"
   },
   "results": {
-   "description": "Результаты лабораторных испытаний платформы",
-   "start": "bandwidth"
+   "description": "Результаты практической части: скорость, ограничивающее звено, релиз, наводка",
+   "start": "throughput"
   },
   "finish": {
-   "description": "Натурный этап, предложения для БПЛА, экономика и выводы",
+   "description": "Дальность, предложения для БПЛА, экономика и выводы",
    "start": "field"
   }
  },
