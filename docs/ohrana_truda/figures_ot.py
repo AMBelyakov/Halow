@@ -9,7 +9,9 @@ from matplotlib.patches import Arc, Circle, FancyArrowPatch, Polygon, Rectangle
 
 import calc_ot as C
 
-plt.rcParams.update({"font.family": "Times New Roman", "font.size": 10})
+plt.rcParams.update({"font.family": "serif", "font.size": 10,
+                     # Times New Roman, а где его нет — метрически совместимый Liberation Serif
+                     "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"]})
 GRAY, DARK = "#d9d9d9", "#555555"
 
 
@@ -98,7 +100,7 @@ ax.plot([desk_x1 - 450, desk_x1 - 450], [0, 600], color=DARK, linewidth=0.6, lin
 ax.plot([desk_x1 - 450, desk_x1], [600, 600], color=DARK, linewidth=0.6, linestyle="--")
 # монитор
 eye = (desk_x1 + 330, EYE_H)
-ang = math.radians(20)
+ang = math.radians(C.MON_ANGLE)
 scr = (eye[0] - ED * math.cos(ang), eye[1] - ED * math.sin(ang))
 ax.add_patch(Polygon([(scr[0] - 25, scr[1] - 180), (scr[0] + 5, scr[1] - 180), (scr[0] + 35, scr[1] + 150),
                       (scr[0] + 5, scr[1] + 150)], closed=True, facecolor="black"))
@@ -128,7 +130,7 @@ ax.plot(*eye, "o", color="black", markersize=2.5)
 # линия взгляда и горизонталь
 ax.plot([eye[0], scr[0] + 20], [eye[1], scr[1]], color="black", linewidth=0.7, linestyle="-.")
 ax.plot([eye[0], scr[0] - 60], [eye[1], eye[1]], color="black", linewidth=0.5, linestyle=":")
-ax.text(eye[0] - 175, eye[1] - 62, "20°", fontsize=8.5)
+ax.text(eye[0] - 175, eye[1] - 62, f"{C.MON_ANGLE}°", fontsize=8.5)
 # пол
 ax.plot([-100, cx + 450], [0, 0], color="black", linewidth=1.2)
 # размеры
