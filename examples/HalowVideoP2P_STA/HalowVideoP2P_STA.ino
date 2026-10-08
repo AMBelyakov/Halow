@@ -425,7 +425,7 @@ static AirMon airMon;
  * ОТКАТ: ползунки обратно (камера STA, приёмник AP), ROLE_SWAP 0, рабочие
  * образы обеим платам, снять питание.
  */
-#define ROLE_SWAP     0
+#define ROLE_SWAP     1
 /*
  * ПОДСТРОЙКА МОДУЛЯЦИИ «ВСЕМ» в модуле (05.10): AT+MCSCTL=<режим> в стартовом окне,
  * только при ROLE_SWAP. Команда есть только в сборке модуля ..._mcsctl.bin
@@ -574,8 +574,8 @@ static volatile int8_t mod_flr = -1, mod_fph = -1;   /* из строки мод
  * число, что и статистика LMAC.
  */
 #define PWRCTL_MODE 1
-#define PWRCTL_LO   25
-#define PWRCTL_HI   35
+#define PWRCTL_LO   20
+#define PWRCTL_HI   30
 /* Потолок мощности регулятора, дБм. 14 дБм = 25 мВт — предел ГКРЧ
  * 07-20-03-001 для 866–868 МГц. Нужна сборка модуля ..._pwrctl14.bin (четвёртый
  * параметр AT+PWRCTL); прежняя сборка его не знает и держит потолок 20. */
@@ -644,7 +644,7 @@ static volatile int8_t mod_flr = -1, mod_fph = -1;   /* из строки мод
  * перегрузки приёмника не спасает. Проверяем прямым убавлением, как 17.09. */
 /* 28.09: 14, а не 20 — стартовая мощность до первого решения регулятора
  * тоже должна укладываться в предел ГКРЧ (25 мВт), см. PWRCTL_MAX. */
-#define TX_POWER_DBM  14
+#define TX_POWER_DBM  3
 
 /*
  * ПОТОЛОК МОДУЛЯЦИИ: -1 — не трогать, 0..7 — ограничить сверху.
@@ -719,7 +719,7 @@ static volatile int8_t mod_flr = -1, mod_fph = -1;   /* из строки мод
  * Идёт на прибитом TX_MCS_FIX, чтобы автоподбор не смешивал картину.
  */
 #define VAR_SWEEP      0   /* 30.09: ручки выбора модуляции (var0930rc); 0 — рабочая прошивка */
-#define VAR_SWEEP_NS   "var0930rc"    /* короткий (VAR_RC_SHORT) — "var0930rs" */
+#define VAR_SWEEP_NS   "var1005sw"    /* короткий (VAR_RC_SHORT) — "var0930rs" */
 typedef struct {
     const char *name;
     const char *cmd[2];
