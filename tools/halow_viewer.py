@@ -812,8 +812,7 @@ PAGE = """<!doctype html>
       <tr><td>Спасено кадров: FEC / досылкой</td><td id="saved">—</td></tr>
       <tr id="r_rec"><td>Запись видео</td><td id="rec">—</td></tr>
     </table>
-    <div class="hint">Видео идёт через USB приёмника (<code>--serial-video COMx</code>).
-      Метка расстояния — наберите в окне просмотрщика, например <code>100m</code>, и Enter.</div>
+    <div class="hint">Видео идёт через USB приёмника (<code>--serial-video COMx</code>).</div>
   </div>
   <div class="board">
     <h1><span id="bdot" class="dot down"></span>Борт: камера и её модуль (лог по радио)</h1>
