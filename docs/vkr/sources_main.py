@@ -10,9 +10,12 @@ MDPI, IEEE Xplore, ResearchGate).
 SOURCES = {
     # --- стандарты, регулирование, государственные документы
     "ieee": "IEEE Std 802.11ah-2016. IEEE Standard for Information technology — Telecommunications "
-            "and information exchange between systems. Local and metropolitan area networks — Specific "
-            "requirements. Part 11: Wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) "
-            "Specifications. Amendment 2: Sub 1 GHz License Exempt Operation. – [S. l.] : IEEE, 2017.",
+            "and information exchange between systems. Local and metropolitan area networks — "
+            "Specific requirements. Part 11: Wireless LAN Medium Access Control (MAC) and Physical "
+            "Layer (PHY) Specifications. Amendment 2: Sub 1 GHz License Exempt Operation. – New "
+            "York : IEEE, 2017. – 594 p. – DOI 10.1109/IEEESTD.2017.7920364. – Текст : электронный "
+            "// IEEE Xplore : [сайт]. – URL: https://ieeexplore.ieee.org/document/7920364 (дата "
+            "обращения: 08.10.2026).",
     "wfa": "Wi-Fi HaLow. – Текст : электронный // Wi-Fi Alliance : [сайт]. – URL: "
            "https://www.wi-fi.org/discover-wi-fi/wi-fi-halow (дата обращения: 24.09.2026).",
     "gkrch": "О выделении полос радиочастот устройствам малого радиуса действия : решение ГКРЧ при "
@@ -44,9 +47,6 @@ SOURCES = {
                "A Testbed Approach / K. Chounos, K. Kyriakou, T. Korakis. – 2025. – arXiv:2508.03146. "
                "– Текст : электронный // arXiv.org : [сайт]. – URL: https://arxiv.org/abs/2508.03146 "
                "(дата обращения: 27.09.2026).",
-    "augustin": "A Study of LoRa : Long Range & Low Power Networks for the Internet of Things / "
-                "A. Augustin, J. Yi, T. Clausen [et al.] // Sensors. – 2016. – Vol. 16, no. 9. – "
-                "Art. 1466. – DOI 10.3390/s16091466. – Текст : электронный.",
     # --- теория распространения и связи
     "aust": "Aust, S. Sub 1GHz wireless LAN propagation path loss models for urban smart grid "
             "applications / S. Aust, T. Ito // 2012 International Conference on Computing, Networking "
@@ -54,8 +54,9 @@ SOURCES = {
             "DOI 10.1109/ICCNC.2012.6167392. – Текст : электронный.",
     "friis": "Friis, H. T. A Note on a Simple Transmission Formula / H. T. Friis // Proceedings of the "
              "IRE. – 1946. – Vol. 34, no. 5. – P. 254–256. – Текст : электронный.",
-    "rappaport": "Rappaport, T. S. Wireless Communications : Principles and Practice / T. S. Rappaport. "
-                 "– 2nd ed. – Upper Saddle River : Prentice Hall, 2002. – Текст : непосредственный.",
+    "rappaport": "Rappaport, T. S. Wireless Communications : Principles and Practice / T. S. "
+                 "Rappaport. – 2nd ed. – Upper Saddle River : Prentice Hall PTR, 2002. – XXIII, 707 "
+                 "p. – ISBN 0-13-042232-0. – Текст : непосредственный.",
     "shannon": "Shannon, C. E. A Mathematical Theory of Communication / C. E. Shannon // Bell System "
                "Technical Journal. – 1948. – Vol. 27, no. 3. – P. 379–423. – Текст : электронный.",
     # --- аппаратура и программные средства
@@ -84,9 +85,11 @@ SOURCES = {
               "include/soc/soc_caps.h / Espressif Systems. – Текст : электронный // GitHub : [сайт]. "
               "– URL: https://github.com/espressif/esp-idf (дата обращения: 27.09.2026).",
     # --- исходные материалы из задания на ВКР
-    "smirnova": "Технологии современных беспроводных сетей Wi-Fi : учебное пособие / Е. В. Смирнова, "
-                "А. В. Пролетарский [и др.]. – Москва : Изд-во МГТУ им. Н. Э. Баумана, 2017. – 446 с. "
-                "– Текст : непосредственный.",
+    "smirnova": "Технологии современных беспроводных сетей Wi-Fi : учебное пособие / Е. В. "
+                "Смирнова, А. В. Пролетарский, Е. А. Ромашкина [и др.] ; под общей редакцией А. В. "
+                "Пролетарского. – Москва : Издательство МГТУ им. Н. Э. Баумана, 2017. – 448 с. – "
+                "(Компьютерные системы и сети ; вып. 2). – ISBN 978-5-7038-4620-9. – Текст : "
+                "непосредственный.",
     "koshkin": "Кошкин, Р. П. Беспилотные авиационные системы / Р. П. Кошкин. – Москва : "
                "Стратегические приоритеты, 2016. – 676 с. – Текст : непосредственный.",
     # --- открытые данные для сравнения (проверены по первоисточникам 08.10.2026)
