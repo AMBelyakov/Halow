@@ -112,6 +112,13 @@ class AirLog:
     def _mark(self, text):
         self._text("\n--- %s %s ---\n" % (text, time.strftime("%H:%M:%S")))
 
+    def mark(self, text):
+        """Метка оператора (например, расстояние) — в лог камеры, если он уже открыт."""
+        with self.lock:
+            if self.f is not None:
+                self._mark("метка: %s" % text)
+                self.f.flush()
+
     def _text(self, s):
         self.f.write(s)
         s = self.partial + s
@@ -148,7 +155,7 @@ class AirLog:
             b.update(gate=m.group(1).rstrip(","))
         m = re.search(r"RTT ср (\d+) мин (\d+) макс (\d+)", ln)
         if m:
-            b.update(rtt_max=int(m.group(3)))
+            b.update(rtt_avg=int(m.group(1)), rtt_min=int(m.group(2)), rtt_max=int(m.group(3)))
         m = re.search(r"\[(связь|нет связи)\] ([\d.]+) fps", ln)
         if m:
             b.update(cam_fps=float(m.group(2)))
@@ -1264,6 +1271,16 @@ CSV_COLUMNS = [
     "useful_kbps_win", "useful_kbps_i", "useful_total", "fec_m",
     "fec_saved", "fec_saved_d", "fec_chunks", "resend_saved", "resend_saved_d",
     "resend_rx", "parity_rx", "frames_late", "frames_late_d", "dup_rx",
+
+    # 08.10: показания канала с борта (лог камеры по радио) — для полевых замеров по
+    # меткам расстояния. Последнее значение на момент строки; пусто — ещё не приходило.
+    # mcs — модуляция последней попытки модуля камеры, per — доля неудачных попыток, %,
+    # air_kbps — скорость в эфире; tx_snr — SNR, с которым приёмник слышит камеру, rx_snr —
+    # SNR приёма на камере, air_rssi — RSSI приёмника у камеры, дБм; pwr_dbm — мощность
+    # передатчика камеры; mcs_floor — нижняя граница MCS; jpeg_q, cam_res — качество и
+    # разрешение видеокадра; rtt_* — задержка по квитанции за период отчёта камеры, мс.
+    "mcs", "per", "air_kbps", "tx_snr", "rx_snr", "air_rssi", "pwr_dbm", "mcs_floor",
+    "jpeg_q", "cam_res", "rtt_avg", "rtt_min", "rtt_max",
 ]
 
 
@@ -1398,6 +1415,13 @@ class CsvLogger(threading.Thread):
                         "frames_late_d": cur["frames_late"] - prev["frames_late"],
                         "dup_rx": cur["dup_rx"],
                     }
+                    b = dict(self.state.airlog.board)
+                    for col, key in (("mcs", "mcs"), ("per", "per"), ("air_kbps", "air_kbps"),
+                                     ("tx_snr", "snr"), ("rx_snr", "rx_snr"), ("air_rssi", "rssi"),
+                                     ("pwr_dbm", "pwr"), ("mcs_floor", "flr"), ("jpeg_q", "q"),
+                                     ("cam_res", "cam_res"), ("rtt_avg", "rtt_avg"),
+                                     ("rtt_min", "rtt_min"), ("rtt_max", "rtt_max")):
+                        row[col] = b.get(key, "")
                     writer.writerow(row)
                     f.flush()
                     self.rows += 1
@@ -1430,6 +1454,7 @@ def note_input_loop(logger):
         text = line.strip()
         if text:
             logger.set_note(text)
+            logger.state.airlog.mark(text)
             print("метка: %s" % text)
 
 
