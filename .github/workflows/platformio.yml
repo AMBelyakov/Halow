@@ -23,6 +23,8 @@ jobs:
           - examples/TX_AH_Rx00p_STA
           - examples/HalowVideoP2P_STA
           - examples/HalowVideoP2P_AP
+          - examples/WifiVideoTest_CAM
+          - examples/WifiVideoTest_RX
 
     steps:
       - uses: actions/checkout@v4

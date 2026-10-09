@@ -159,6 +159,12 @@ class AirLog:
         m = re.search(r"\[(связь|нет связи)\] ([\d.]+) fps", ln)
         if m:
             b.update(cam_fps=float(m.group(2)))
+        # 09.10: тест Wi-Fi 2,4 ГГц (WifiVideoTest_CAM): уровень приёмника у камеры, фон эфира
+        # у камеры и запас над ним, мощность и качество.
+        m = re.search(r"WIFI rssi=(-?\d+) nf=(-?\d+) snr=(-?\d+) pwr=(\d+) ch=\d+ q=(\d+)", ln)
+        if m:
+            b.update(rssi=int(m.group(1)), nf=int(m.group(2)), rx_snr=int(m.group(3)),
+                     pwr=int(m.group(4)), q=int(m.group(5)))
         m = re.search(r"(?:MCS-ПЕРЕБОР|ВАРИАНТ): (шаг \d+ из \d+, [^—]+)", ln)
         if m:
             b.update(sweep=m.group(1))
@@ -1278,9 +1284,10 @@ CSV_COLUMNS = [
     # air_kbps — скорость в эфире; tx_snr — SNR, с которым приёмник слышит камеру, rx_snr —
     # SNR приёма на камере, air_rssi — RSSI приёмника у камеры, дБм; pwr_dbm — мощность
     # передатчика камеры; mcs_floor — нижняя граница MCS; jpeg_q, cam_res — качество и
-    # разрешение видеокадра; rtt_* — задержка по квитанции за период отчёта камеры, мс.
+    # разрешение видеокадра; rtt_* — задержка по квитанции за период отчёта камеры, мс;
+    # cam_nf — фон эфира у камеры, дБм (только тест Wi-Fi 2,4 ГГц, 09.10).
     "mcs", "per", "air_kbps", "tx_snr", "rx_snr", "air_rssi", "pwr_dbm", "mcs_floor",
-    "jpeg_q", "cam_res", "rtt_avg", "rtt_min", "rtt_max",
+    "jpeg_q", "cam_res", "rtt_avg", "rtt_min", "rtt_max", "cam_nf",
 ]
 
 
@@ -1420,7 +1427,8 @@ class CsvLogger(threading.Thread):
                                      ("tx_snr", "snr"), ("rx_snr", "rx_snr"), ("air_rssi", "rssi"),
                                      ("pwr_dbm", "pwr"), ("mcs_floor", "flr"), ("jpeg_q", "q"),
                                      ("cam_res", "cam_res"), ("rtt_avg", "rtt_avg"),
-                                     ("rtt_min", "rtt_min"), ("rtt_max", "rtt_max")):
+                                     ("rtt_min", "rtt_min"), ("rtt_max", "rtt_max"),
+                                     ("cam_nf", "nf")):
                         row[col] = b.get(key, "")
                     writer.writerow(row)
                     f.flush()
