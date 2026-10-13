@@ -20,6 +20,23 @@ SOURCES = {
     "evk": "MM6108-EKH05-05US, WiFi Development Tools — 802.11 Wi-Fi HaLow IoT Development Board. – "
            "Текст : электронный // ЧИП и ДИП : [сайт]. – URL: https://chipdip.ru/product0/8040419288 "
            "(дата обращения: 24.09.2026).",
+    "heltec": "ESP32 Wi-Fi HaLow Camera HT-HC32. – Текст : электронный // Heltec Automation : "
+              "[сайт]. – URL: https://wiki.heltec.org/docs/devices/wifi-halow/ht-hc32/ (дата "
+              "обращения: 13.10.2026).",
+    "heltecshop": "ESP32 Wi-Fi HaLow Camera. – Текст : электронный // Heltec Automation : "
+                  "[сайт]. – URL: https://heltec.org/project/ht-hc32/ (дата обращения: 13.10.2026).",
+    "heltecmm": "Heltec Automation partners with Morse Micro to advance IoT connectivity with Wi-Fi "
+                "HaLow. – 12.06.2025. – Текст : электронный // Morse Micro : [сайт]. – URL: "
+                "https://morsemicro.com/news/heltec-automation-partners-with-morse-micro-to-advance-"
+                "iot-connectivity-with-wi-fi-halow (дата обращения: 13.10.2026).",
+    "an1200": "AN1200.22. LoRa Modulation Basics : application note, revision 2 / Semtech Corporation. "
+              "– 2015. – Текст : электронный // GitHub : ExpressLRS/ExpressLRS-Hardware, "
+              "Doc/an1200.22.pdf. – URL: https://github.com/ExpressLRS/ExpressLRS-Hardware/tree/master/"
+              "Doc (дата обращения: 08.10.2026).",
+    "rosseti": "Андрей Рюмин рассказал о достижениях «Россетей» на выставке-форуме «Россия». – "
+               "27.01.2024. – Текст : электронный // Деловой Петербург : [сайт]. – URL: "
+               "https://www.dp.ru/a/2024/01/27/andrej-rjumin-rasskazal-o-dostizhenijah (дата "
+               "обращения: 13.10.2026).",
     "kalend": "Производственный календарь на 2026 год. – Текст : электронный // КонсультантПлюс : "
               "[сайт]. – URL: https://www.consultant.ru/law/ref/calendar/proizvodstvennye/2026/ "
               "(дата обращения: 24.09.2026).",

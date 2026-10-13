@@ -524,5 +524,6 @@ D.dash(f"тяжесть трудового процесса соответств
        f"Р 2.2.2006-05 соответствует классу {cls(R['tension_class'])} (допустимый);")
 D.dash(f"итоговый класс условий труда специалиста{FINAL_NOTE} — {FINAL}.")
 
+D.frame("ot")
 order, unused = D.finalize(SOURCES, "ot", OUT)
 print("saved", OUT, "formulas:", D.fcount, "tables:", D.tcount, "refs:", len(order), "unused:", unused)

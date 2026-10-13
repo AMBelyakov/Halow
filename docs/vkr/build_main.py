@@ -19,11 +19,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "ekonomika"))
 sys.path.insert(0, os.path.join(HERE, "..", "ohrana_truda"))
 
+from docx.enum.section import WD_SECTION     # noqa: E402
+from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER   # noqa: E402
 from docx.oxml import OxmlElement            # noqa: E402
+from docx.shared import Mm                   # noqa: E402
 from docx.oxml.ns import qn                  # noqa: E402
 
 import calc_economics as C                   # noqa: E402
-from docx_common import (CENTER, LEFT, ORDER_FILE, P, V, VkrDoc, bar, frac, mr, n, number_refs,  # noqa: E402
+from docx_common import (CENTER, LEFT, ORDER_FILE, TEXT_W, P, V, VkrDoc, bar, frac, mr, n, number_refs,  # noqa: E402
                          paren, sup)
 from sources_main import SOURCES             # noqa: E402
 from sources_econ import SOURCES as SOURCES_ECON   # noqa: E402
@@ -138,6 +141,7 @@ BPP = 4000 * 8 / PX
 ENC = PX_RATE * BPP
 
 THALOW, ALFA = C.THALOW_PRICE, round(C.ALFA_USD * C.USD_RUB)
+HELTEC = [round(x * C.USD_RUB) for x in (22.90, 44.90)]   # heltec.org, 13.10.2026, по комплектациям
 
 
 def d1(x):
@@ -195,24 +199,25 @@ def sub_up(base, s):
 
 
 def toc():
-    """Поле оглавления Word: обновляется при открытии (F9 или «Обновить поле»)."""
-    D.H("Содержание", 1)
-    p = D.doc.add_paragraph()
-    run = p.add_run()
-    for tag, txt in (("begin", None), (None, 'TOC \\o "1-2" \\h \\z \\u'), ("separate", None)):
-        if tag:
-            el = OxmlElement("w:fldChar")
-            el.set(qn("w:fldCharType"), tag)
-        else:
-            el = OxmlElement("w:instrText")
-            el.set(qn("xml:space"), "preserve")
-            el.text = txt
-        run._r.append(el)
-    run2 = p.add_run("Оглавление строится по заголовкам: в Word — правый щелчок, «Обновить поле».")
-    run2.italic = True
-    end = OxmlElement("w:fldChar")
-    end.set(qn("w:fldCharType"), "end")
-    p.add_run()._r.append(end)
+    """Содержание всей ПЗ (главы 1–3, 4 и 5 из отдельных файлов, заключение, источники) с
+    номерами листов. Строки собирает build_all.py по вёрстке Word (toc.json): поле Word здесь
+    не годится — оно не видит глав 4 и 5 и до обновления пустое."""
+    D.H("Содержание", 1).paragraph_format.alignment = CENTER
+    try:
+        with open(os.path.join(HERE, "toc.json"), encoding="utf-8") as f:
+            rows = json.load(f)
+    except FileNotFoundError:
+        D.para("Содержание формируется при полной сборке (docs/vkr/build_all.py).")
+        return
+    for lvl, text, page in rows:
+        p = D.doc.add_paragraph()
+        pf = p.paragraph_format
+        pf.first_line_indent = Mm(0)
+        pf.left_indent = Mm(0 if lvl == 1 else 5)
+        pf.right_indent = Mm(10)
+        pf.alignment = LEFT
+        pf.tab_stops.add_tab_stop(Mm(TEXT_W), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+        p.add_run(f"{text}	{page}")
 
 
 # ======================================================================= СОДЕРЖАНИЕ
@@ -798,13 +803,14 @@ D.para("Интервал характеризует точность оценк�
        "убывает как 1/√n.")
 
 sec("2.5", "Выбор аппаратных средств")
-D.para("На рынке, доступном в Российской Федерации, найдено четыре варианта оборудования Wi-Fi "
-       "HaLow (таблица ", D.next_tab(), ").")
+D.para("На рынке найдено пять вариантов оборудования Wi-Fi HaLow (таблица ", D.next_tab(), ").")
 D.table("Оборудование Wi-Fi HaLow, доступное для исследования", (40, 36, 55, 34), [
     ["Платформа", "Чипсет", "Исполнение", "Цена узла, руб."],
     ["LilyGO T-HaLow V1.0 [@ali]", "Taixin TX-AH-R900P",
      "законченная плата: ESP32-S3, разъём камеры, Ethernet, держатель аккумулятора 18650",
      n(THALOW)],
+    ["Heltec HT-HC32 [@heltec; @heltecshop]", "Morse Micro MM6108 [@heltecmm]",
+     "законченная плата: ESP32-S3, камера, разъём аккумулятора", f"{n(HELTEC[0])}–{n(HELTEC[1])}"],
     ["ALFA Network AHPI7292S [@alfa]", "Newracom NRC7292",
      "плата расширения, требуется управляющий компьютер Raspberry Pi", f"{n(ALFA)} без управляющего компьютера"],
     ["Newracom NRC7292 EVK, NRC7394 EVK [@nrc; @nrc7292]", "Newracom NRC7292 / NRC7394",
@@ -812,10 +818,12 @@ D.table("Оборудование Wi-Fi HaLow, доступное для исс�
     ["Morse Micro MM6108-EKH05 [@evk]", "Morse Micro MM6108",
      "оценочный комплект производителя (управляющий микроконтроллер STM32U585)", n(C.EVK_PRICE)],
 ], align="llll", size=11)
-D.para("Выбрана плата LilyGO T-HaLow. Она дешевле аналогов в 1,8–12,4 раза и, главное, является "
-       "законченным узлом удалённого объекта: на одной плате находятся процессор, радиомодуль "
-       "Wi-Fi HaLow, разъём камеры и держатель аккумулятора. Для остальных вариантов процессор и "
-       "камеру пришлось бы добавлять и связывать отдельно. Для стенда используются две платы: "
+D.para("Выбрана плата LilyGO T-HaLow. Она дешевле плат расширения и оценочных комплектов в "
+       "1,8–12,4 раза и является законченным узлом удалённого объекта: на одной плате находятся "
+       "процессор, радиомодуль Wi-Fi HaLow, разъём камеры и держатель аккумулятора. Для этих "
+       "вариантов процессор и камеру пришлось бы добавлять и связывать отдельно. Той же "
+       "компоновки только плата Heltec HT-HC32 сопоставимой цены; у T-HaLow на плате есть "
+       "держатель аккумулятора 18650 и порт Ethernet, что упрощает автономные полевые испытания. Для стенда используются две платы: "
        "передатчик с камерой (бортовой узел) и приёмник (наземный пункт).")
 D.para("Плата построена на модуле ESP32-S3-WROOM-1-N16R8 (два ядра Xtensa LX7 до 240 МГц, "
        "16 МБ флеш-памяти, 8 МБ PSRAM, встроенный Wi-Fi 2,4 ГГц стандарта IEEE 802.11b/g/n) "
@@ -1500,7 +1508,10 @@ D.para("7. На идентичной платформе при нормах мо
        "ниже видео.")
 
 # ======================================================================= ЗАКЛЮЧЕНИЕ
-unnumbered("Заключение")
+# Между главой 3 и заключением при сшивке ПЗ встают главы 4 и 5 (отдельные файлы), поэтому
+# заключение и список источников — отдельный раздел со своим начальным листом (frame.json "tail").
+D.doc.add_section(WD_SECTION.NEW_PAGE)
+unnumbered("Заключение", first=True)
 D.para("Целью работы являлся анализ эффективности использования технологии Wi-Fi HaLow на базе "
        "платформы LilyGO T-HaLow по сравнению с традиционными протоколами Wi-Fi по критериям "
        "дальности, уровня сигнала, задержки и потерь пакетов. В ходе работы получены следующие "
@@ -1588,6 +1599,8 @@ def finalize(out):
     return cited, set(SOURCES) - set(cited), len(num)
 
 
+D.frame("main", D.doc.sections[0])
+D.frame("tail", D.doc.sections[-1], big_first=False)
 cited, unused, total = finalize(OUT)
 print(f"сохранено: {OUT}")
 print(f"источников в основной части: {len(cited)}; в списке ВКР: {total}; "

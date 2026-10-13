@@ -9,6 +9,7 @@
 Запуск: python calc_economics.py  -> печатает все промежуточные величины.
 """
 from datetime import date, timedelta
+import math
 import statistics
 
 # ---------------------------------------------------------------- нормативы 2026
@@ -20,8 +21,7 @@ VACATION_WD = 20             # 28 календ. дней отпуска = 20 р�
 K_DOP = round(VACATION_WD / (247 - VACATION_WD), 3)   # дополнительная зарплата, 0,088
 OVERHEAD_RATE = 1.00         # накладные: k_накл·З_ЗП, 1,0 ≤ k_накл ≤ 2,0 (формула 4.12)
 OTHER_RATE = 0.10            # прочие расходы, доля от ФОТ
-RHO_ZP = 2.00                # рентабельность по отношению к оплате труда (200..400 %)
-ALPHA = 1.0                  # доля эффекта, приходящаяся на разработчика
+RHO_ZP = 3.00                # рентабельность по отношению к оплате труда (200..400 %), среднее
 E_NORM = 0.5                 # нормативный уровень эффективности для наукоёмкой продукции
 DAYS_YEAR = 365
 USD_RUB = 84.1975            # курс ЦБ РФ на 20.09.2026
@@ -104,7 +104,9 @@ WORKS = [
      8, {"Р": 1, "И": 1}),
     (6, 7, "Экономическая часть, охрана труда, выводы и оформление отчёта", 13, {"И": 1}),
 ]
-DUMMY = [(3, 4)]                       # фиктивная работа: методика нужна до измерений
+# 3–4 — ожидание: методика готова на 10 дней раньше программ стенда, измерения ждут обе
+# (замечание руководителя 13.10: резервов-простоев в графике быть не должно)
+DUMMY = [(3, 4, 10)]
 
 # ---------------------------------------------------------------- материалы (для проверки 5 %)
 THALOW_PRICE = round(37.98 * USD_RUB)
@@ -125,18 +127,42 @@ MATERIALS = [    # материалы: печать записки, методи
     ("Канцелярские принадлежности, журналы полевых измерений", "компл.", 1, 2_500),
 ]
 
+# ---------------------------------------------------------------- эффект (ф. 5.3 методики)
+# Линия связи с БПЛА вдоль линейного объекта — цепочка наземных ретрансляторов. Режим около
+# 1 Мбит/с (телеметрия и видео пониженного разрешения). Дальность пролёта — бюджет канала
+# раздела 3.7 основной части: свободное пространство, запас 10 дБ, нормы мощности РФ.
+# База — Wi-Fi 2,4 ГГц (802.11b 1 Мбит/с), новый вариант — Wi-Fi HaLow (2 МГц MCS 0). Оба
+# радиотракта на одной плате T-HaLow, поэтому ретранслятор стоит одинаково — разница в числе.
+# 13.10: по замечанию руководителя («меньше ретрансляторов — вот экономия»); ретранслятор —
+# две платы (пользователь), объём — доля сети «Россетей» вместо условных 15 линий.
+LINK_MARGIN = 10
+HOP = {"Б": ("Wi-Fi 2,4 ГГц, 802.11b, 1 Мбит/с", 20, -98.4, 2437.0),
+       "Н": ("Wi-Fi HaLow, 2 МГц, MCS 0, 0,65 Мбит/с", 14, -101.0, 867.0)}  # ЭИИМ, чувств., МГц
+LINE_KM = 20                     # длина одной линии, км
+NETWORK_KM = 2_500_000           # ЛЭП группы «Россети» (А. Рюмин, «Деловой Петербург», 27.01.2024)
+NETWORK_SHARE = 0.0024           # доля сети, оснащаемая каналами связи с БПЛА за год
+LINES = round(NETWORK_KM * NETWORK_SHARE / LINE_KM)   # 300 линий = 6 000 км в год
+DEPLOY_YEARS = 1.0               # период — год
+RELAY = [  # ретранслятор — две платы T-HaLow, соединённые кабелем: приём с предыдущего пролёта
+    # и передача на следующий на разных каналах (наименование, кол-во, цена ₽)
+    ("Плата LilyGO T-HaLow (ESP32-S3 + TX-AH-R900P)", 2, THALOW_PRICE),
+    ("Аккумулятор Li-Ion 18650, 3000 мА·ч", 2, 450),
+]
+
 # ---------------------------------------------------------------- НТП
-# (признак, значимость R_i, база Q_Б, новая Q_Н)
+# Сравнение технологий (замечание 13.10): базы — LoRa и Wi-Fi 2,4 ГГц, НТПр — канал Wi-Fi HaLow
+# с экспериментально определёнными характеристиками. (признак, R_i, Q_LoRa, Q_WiFi, Q_HaLow)
+BASES = ["LoRa", "Wi-Fi 2,4 ГГц"]
 NTP = [
-    ("Научно-технический уровень (новизна) НТПр", 0.4, 3, 5),
-    ("Перспективность НТПр", 0.4, 5, 7),
-    ("Возможность применения результатов НТПр", 0.2, 3, 8),
+    ("Научно-технический уровень (новизна) НТПр", 0.4, 5, 5, 7),
+    ("Перспективность НТПр", 0.4, 4, 5, 7),
+    ("Возможность применения результатов НТПр", 0.2, 2, 7, 8),
 ]
 NOVELTY_SCALE = ["Принципиально новое", "Новое", "Улучшенное", "Существующего уровня", "Устаревшее"]
 NOVELTY_PTS = [5, 3, 2, 1, 0]
 # (критерий, уровень)
 NOVELTY = [("Функциональный", "Новое"), ("Технологический", "Улучшенное"),
-           ("Производственный", "Улучшенное"), ("Социальный", "Существующего уровня"),
+           ("Производственный", "Существующего уровня"), ("Социальный", "Существующего уровня"),
            ("Юридический", "Существующего уровня")]
 
 
@@ -144,7 +170,7 @@ def network():
     works = [dict(i=i, j=j, name=nm, t=t, tmin=t - 2, tmax=t + 3, who=who) for i, j, nm, t, who in WORKS]
     for w in works:
         assert (3 * w["tmin"] + 2 * w["tmax"]) / 5 == w["t"]
-    arcs = [(w["i"], w["j"], w["t"]) for w in works] + [(i, j, 0) for i, j in DUMMY]
+    arcs = [(w["i"], w["j"], w["t"]) for w in works] + [(i, j, t) for i, j, t in DUMMY]
     events = sorted({a for a, _, _ in arcs} | {b for _, b, _ in arcs})
     early = {}
     for e in events:
@@ -165,12 +191,23 @@ def network():
                 params=par)
 
 
+def int_shares(vals):
+    """Доли в целых процентах с суммой 100 (метод наибольших остатков)."""
+    tot = sum(vals)
+    raw = [v / tot * 100 for v in vals]
+    out = [int(x) for x in raw]
+    for i in sorted(range(len(raw)), key=lambda i: raw[i] - out[i], reverse=True)[:100 - sum(out)]:
+        out[i] += 1
+    return out
+
+
 def compute():
     r = {}
     sR = sum(x[1] for x in NTP)
-    r["H_new"] = sum(x[1] * x[3] for x in NTP) / sR
-    r["H_base"] = sum(x[1] * x[2] for x in NTP) / sR
-    r["J"] = round(r["H_new"] / r["H_base"], 2)
+    r["H_new"] = sum(x[1] * x[4] for x in NTP) / sR
+    r["H_bases"] = [sum(x[1] * x[2 + b] for x in NTP) / sR for b in range(len(BASES))]
+    r["J_bases"] = [round(r["H_new"] / h, 2) for h in r["H_bases"]]
+    r["J"] = r["J_bases"][1]                      # для эффекта — относительно Wi-Fi 2,4 ГГц
     pts = dict(zip(NOVELTY_SCALE, NOVELTY_PTS))
     r["nov_sum"] = sum(pts[lvl] for _, lvl in NOVELTY)
     r["nov_max"] = 5 * len(NOVELTY)
@@ -193,8 +230,8 @@ def compute():
             s_["T"] += wd * cnt
             s_["zp"] += wd * cnt * DAY_RATE[who]
     r["T_total"] = sum(x["T"] for x in st)
-    for x in st:
-        x["share"] = x["T"] / r["T_total"] * 100
+    for x, sh in zip(st, int_shares([x["T"] for x in st])):
+        x["share"] = sh
         x["avg"] = x["zp"] / x["T"]
     r["stages"] = st
     r["zp"] = sum(x["zp"] for x in st)
@@ -206,7 +243,8 @@ def compute():
     r["mat_sum"] = sum(q * p for _, _, q, p in MATERIALS)
     r["overhead"] = round(r["fot"] * OVERHEAD_RATE)
     r["other"] = round(r["fot"] * OTHER_RATE)
-    r["items"] = [("Материалы", r["mat_sum"]), ("Покупные комплектующие изделия", r["comp_sum"]),
+    r["items"] = [("Материалы, полуфабрикаты, покупные комплектующие изделия",
+                   r["mat_sum"] + r["comp_sum"]),
                   ("Заработная плата исполнителей (основная и дополнительная)", r["fot"]),
                   ("Отчисления на социальные нужды", r["soc"]),
                   (f"Накладные расходы", r["overhead"]), ("Прочие расходы", r["other"])]
@@ -215,11 +253,23 @@ def compute():
     r["price"] = round(r["Z"] + r["fot"] * RHO_ZP)
     r["profit"] = r["price"] - r["Z"]
     r["rent_cost"] = r["profit"] / r["Z"] * 100
-    r["dK"] = 2 * EVK_PRICE - 2 * THALOW_PRICE
-    r["Z_base"] = r["Z"] + r["dK"]
-    r["T_n"] = round(r["T_cal"] / DAYS_YEAR, 3)
-    r["E_eff"] = round((r["Z_base"] * r["J"] - r["Z"]) / r["T_n"])
-    r["E_lvl"] = round(r["E_eff"] * ALPHA / r["price"], 2)
+    r["shares"] = int_shares([v for _, v in r["items"]])
+    # ретрансляторы: дальность пролёта, число на линию и затраты
+    r["hop"] = {}
+    for v, (_, eirp, sens, f) in HOP.items():
+        L = eirp - sens - LINK_MARGIN
+        km = 10 ** ((L - 32.44 - 20 * math.log10(f)) / 20)
+        r["hop"][v] = dict(L=L, km=round(km, 1), n=math.ceil(LINE_KM / round(km, 1)) - 1)
+    r["relay_cost"] = sum(q * c for _, q, c in RELAY)
+    r["relays_base"] = r["hop"]["Б"]["n"] * LINES
+    r["relays_new"] = r["hop"]["Н"]["n"] * LINES
+    r["Z_base"] = r["relays_base"] * r["relay_cost"]
+    r["Z_new"] = r["relays_new"] * r["relay_cost"]
+    r["T_n"] = DEPLOY_YEARS
+    r["E_eff"] = round((r["Z_base"] * r["J"] - r["Z_new"]) / r["T_n"])
+    # доля разработчика — пропорционально затратам участников создания и применения [pan]
+    r["alpha"] = round(r["Z"] / (r["Z"] + r["Z_new"]), 2)
+    r["E_lvl"] = round(r["E_eff"] * r["alpha"] / r["price"], 2)
     r["T_ok"] = round(1 / r["E_lvl"], 2)
     r["T_ok_months"] = round(r["T_ok"] * 12)
     return r
@@ -239,7 +289,9 @@ if __name__ == "__main__":
     for p_ in R["net"]["params"]:
         print(p_)
     for k in ("zp", "zp_osn", "zp_dop", "fot", "soc", "comp_sum", "mat_sum", "overhead", "other",
-              "Z", "price", "profit", "dK", "Z_base", "E_eff"):
+              "Z", "price", "profit", "Z_base", "Z_new", "E_eff"):
         print(f"{k:>9} = {fmt(R[k])}")
     print("d_zp", round(R["d_zp"], 3), "rent", round(R["rent_cost"], 1))
+    print("H", R["H_new"], R["H_bases"], "J", R["J_bases"], "hop", R["hop"], "relay", R["relay_cost"])
+    print("relays", R["relays_base"], R["relays_new"], "shares", R["shares"], "alpha", R["alpha"])
     print("T_n", R["T_n"], "E", R["E_lvl"], "T_ok", R["T_ok"], "лет =", R["T_ok_months"], "мес")

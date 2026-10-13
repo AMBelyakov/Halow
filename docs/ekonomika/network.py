@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Сетевой график НИР по данным calc_economics.R["net"] — простой, как в принятом образце:
 кружки событий с номерами, над стрелкой — продолжительность работы, кал. дн.;
-критический путь выделен, фиктивная работа — пунктиром.
+критический путь выделен, ожидание (без затрат труда) — пунктиром.
 
 13.10: прежний график (13 событий, сектора ранних и поздних сроков) — network.py.bak-2026-10-13.
 Запуск: python network.py -> network.png (рисунок главы 4).
@@ -43,8 +43,10 @@ for w in NET["works"]:
     nx, ny = -uy, ux
     ax.text(mx + nx * 0.25, my + ny * 0.25, str(w["t"]), ha="center", va="center",
             fontsize=11, fontweight="bold" if w["crit"] else "normal")
-for i, j in DUMMY:
-    arrow(i, j, False, dashed=True)
+for i, j, t in DUMMY:                    # ожидание (без затрат труда) — пунктир, на критическом пути
+    mx, my, ux, uy = arrow(i, j, True, dashed=True)
+    ax.text(mx - uy * 0.25, my + ux * 0.25, str(t), ha="center", va="center", fontsize=11,
+            fontweight="bold")
 
 for e, (x, y) in POS.items():
     crit = e in NET["crit_events"]

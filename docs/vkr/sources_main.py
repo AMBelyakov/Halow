@@ -77,6 +77,15 @@ SOURCES = {
     "evk": "MM6108-EKH05-05US, WiFi Development Tools — 802.11 Wi-Fi HaLow IoT Development Board. – "
            "Текст : электронный // ЧИП и ДИП : [сайт]. – URL: https://chipdip.ru/product0/8040419288 "
            "(дата обращения: 24.09.2026).",
+    "heltec": "ESP32 Wi-Fi HaLow Camera HT-HC32. – Текст : электронный // Heltec Automation : "
+              "[сайт]. – URL: https://wiki.heltec.org/docs/devices/wifi-halow/ht-hc32/ (дата "
+              "обращения: 13.10.2026).",
+    "heltecshop": "ESP32 Wi-Fi HaLow Camera. – Текст : электронный // Heltec Automation : "
+                  "[сайт]. – URL: https://heltec.org/project/ht-hc32/ (дата обращения: 13.10.2026).",
+    "heltecmm": "Heltec Automation partners with Morse Micro to advance IoT connectivity with Wi-Fi "
+                "HaLow. – 12.06.2025. – Текст : электронный // Morse Micro : [сайт]. – URL: "
+                "https://morsemicro.com/news/heltec-automation-partners-with-morse-micro-to-advance-"
+                "iot-connectivity-with-wi-fi-halow (дата обращения: 13.10.2026).",
     "lilygo": "T-Halow : исходные тексты, схема платы, комплект разработки модуля TX-AH / LilyGO "
               "(Xinyuan-LilyGO). – Текст : электронный // GitHub : [сайт]. – URL: "
               "https://github.com/Xinyuan-LilyGO/T-Halow (дата обращения: 27.09.2026).",

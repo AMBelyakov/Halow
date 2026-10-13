@@ -21,6 +21,7 @@ from docx.shared import Cm, Mm, Pt, RGBColor
 
 NBSP = " "
 TEXT_W = 165  # мм: A4 210 - 30 - 15
+BODY_PT = 12  # кегль основного текста (пользователь 13.10.2026: 12, не 14)
 LEFT, CENTER, RIGHT = WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.RIGHT
 
 
@@ -183,7 +184,7 @@ class VkrDoc:
             nl.append(lang)
         lang.set(qn("w:val"), "ru-RU")
         lang.set(qn("w:eastAsia"), "ru-RU")
-        _set_font(normal, 14)
+        _set_font(normal, BODY_PT)
         pf = normal.paragraph_format
         pf.first_line_indent = Cm(1.25)
         pf.line_spacing = 1.5
@@ -191,7 +192,7 @@ class VkrDoc:
         pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         pf.widow_control = True
 
-        for lvl, size in ((1, 16), (2, 14), (3, 14)):
+        for lvl, size in ((1, BODY_PT + 2), (2, BODY_PT), (3, BODY_PT)):
             st = d.styles[f"Heading {lvl}"]
             _set_font(st, size, bold=True)
             hp = st.paragraph_format
@@ -382,6 +383,10 @@ class VkrDoc:
     def next_fig(self):
         return f"{self.ch}.{self.picount + 1}"
 
+    def next_formula(self, k=0):
+        """Номер (k+1)-й следующей нумерованной формулы, для ссылки до её появления."""
+        return f"({self.ch}.{self.fcount + 1 + k})"
+
     def next_tab(self):
         return f"{self.ch}.{self.tcount + 1}"
 
@@ -399,6 +404,13 @@ class VkrDoc:
                 el.set(qn("xml:space"), "preserve")
                 el.text = txt
             run._r.append(el)
+
+    # ---------------------------------------------------------- рамка (ГОСТ 2.104)
+    def frame(self, part, section=None, big_first=None):
+        """Рамка и основная надпись на листах раздела документа (по умолчанию первого);
+        part — ключ начального листа в docs/vkr/frame.json."""
+        import frame
+        frame.apply(section if section is not None else self.doc.sections[0], part, big_first)
 
     # ---------------------------------------------------------- источники
     def finalize(self, sources, chapter, out):
