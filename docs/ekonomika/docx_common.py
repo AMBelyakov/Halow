@@ -18,6 +18,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_COLOR_INDEX, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn
 from docx.shared import Cm, Mm, Pt, RGBColor
+from docx.table import _Cell
 
 NBSP = " "
 TEXT_W = 165  # мм: A4 210 - 30 - 15
@@ -357,15 +358,17 @@ class VkrDoc:
                         p.alignment = al[align[ci]]
         for ci, gc in enumerate(t._tbl.tblGrid.findall(qn("w:gridCol"))):
             gc.set(qn("w:w"), str(int(widths_mm[ci] / 25.4 * 1440)))
-        if len(rows) <= 15:                       # небольшая таблица не разрывается
-            for tr in t.rows[:-1]:
-                for cell in tr.cells:
-                    for p in cell.paragraphs:
-                        p.paragraph_format.keep_with_next = True
         for (r0, c0, r1, c1) in merges:
             merged = t.cell(r0, c0).merge(t.cell(r1, c1))
-            for p in merged.paragraphs[1:]:
-                p._p.getparent().remove(p._p)
+            for p in merged.paragraphs[1:]:      # пустые абзацы слитых ячеек; перенос строк — оставить
+                if not p.text.strip():
+                    p._p.getparent().remove(p._p)
+        # после слияния: у продолжений слитых ячеек свои пустые абзацы
+        if len(rows) <= 15:                       # небольшая таблица не разрывается
+            for tr in t.rows[:-1]:
+                for tc in tr._tr.findall(qn("w:tc")):
+                    for p in _Cell(tc, t).paragraphs:
+                        p.paragraph_format.keep_with_next = True
         self.doc.add_paragraph().paragraph_format.line_spacing = 1.0
         return num
 
