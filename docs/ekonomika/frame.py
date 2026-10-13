@@ -99,6 +99,23 @@ def _fmt_all(tbl):
             _rfmt(r)
 
 
+def _top_line(tbl):
+    """Верхняя линия основной надписи (в рамках кафедры её даёт контур рамки, у нас — штамп)."""
+    tr = tbl.find(qn("w:tr"))
+    for tc in tr.findall(qn("w:tc")):
+        pr = tc.find(qn("w:tcPr"))
+        b = pr.find(qn("w:tcBorders"))
+        if b is None:
+            b = OxmlElement("w:tcBorders")
+            pr.insert(1, b)
+        for e in b.findall(qn("w:top")):
+            b.remove(e)
+        top = OxmlElement("w:top")
+        for k, v in (("w:val", "single"), ("w:sz", "18"), ("w:space", "0"), ("w:color", "auto")):
+            top.set(qn(k), v)
+        b.insert(0, top)
+
+
 def _rfmt(r, size=None):
     rpr = r.find(qn("w:rPr"))
     if rpr is None:
@@ -158,6 +175,7 @@ def _put(tc, text=None, size=9, align="center", field=None):
 def big_stamp(cfg):
     tbl = _stamp("big")
     _widen(tbl, 5)
+    _top_line(tbl)
     _fmt_all(tbl)
     rows = _cells(tbl)
     at = lambda r, c: dict(rows[r])[c]                       # noqa: E731
@@ -175,6 +193,7 @@ def big_stamp(cfg):
 def small_stamp(cfg):
     tbl = _stamp("small")
     _widen(tbl, 5)
+    _top_line(tbl)
     _fmt_all(tbl)
     rows = _cells(tbl)
     at = lambda r, c: dict(rows[r])[c]                       # noqa: E731

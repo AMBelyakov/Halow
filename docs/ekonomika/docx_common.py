@@ -387,8 +387,9 @@ class VkrDoc:
         """Номер (k+1)-й следующей нумерованной формулы, для ссылки до её появления."""
         return f"({self.ch}.{self.fcount + 1 + k})"
 
-    def next_tab(self):
-        return f"{self.ch}.{self.tcount + 1}"
+    def next_tab(self, k=0):
+        """Номер (k+1)-й следующей таблицы, для ссылки до её появления."""
+        return f"{self.ch}.{self.tcount + 1 + k}"
 
     # ---------------------------------------------------------- колонтитул
     def _footer_page_numbers(self):
