@@ -67,6 +67,11 @@ static uint32_t st_t0 = 0;
 
 static wt_nf_t nf;                       // фон эфира у этой платы (promiscuous)
 
+/* заливка: до flood_until_ms вместо видео шлём пакеты 'F' без пауз */
+static uint32_t flood_until_ms = 0;
+static uint32_t flood_seq = 0;
+static uint32_t st_flood_pkts = 0, st_flood_fail = 0;
+
 // ---------------------------- лог: в USB и по воздуху ----------------------------
 
 /* Строка уходит в USB и пакетом 'T' приёмнику (тот отдаёт её в просмотрщик записью 'L'). */
@@ -100,6 +105,11 @@ static void cam_log(const char *fmt, ...)
 
 static bool camera_init(void)
 {
+    /* 13.10: как в HalowVideoP2P_STA (14.08) — драйвер камеры печатает EV-VSYNC-OVF из cam_task
+     * с маленьким стеком и валит плату по Stack canary (без этого перезагрузка каждые секунды). */
+    esp_log_level_set("cam_hal", ESP_LOG_NONE);
+    esp_log_level_set("s3 ll_cam", ESP_LOG_NONE);
+
     camera_config_t c;
     memset(&c, 0, sizeof(c));
     c.ledc_channel = LEDC_CHANNEL_0;
@@ -204,6 +214,15 @@ static void poll_rx(void)
             peer = from;
             have_peer = true;
             peer_seen_ms = millis();
+        } else if (buf[0] == WT_TYPE_CMD && n >= 3) {
+            uint16_t sec = (uint16_t)(buf[1] | (buf[2] << 8));
+            uint32_t until = sec ? millis() + sec * 1000UL : 0;
+            cam_log("ЗАЛИВКА: %s\n", sec ? "старт" : "стоп");
+            flood_until_ms = until;
+        } else if (buf[0] == WT_TYPE_PWR && n >= 2) {
+            tx_power_dbm = constrain((int)buf[1], 2, 20);
+            wt_set_tx_power(tx_power_dbm);
+            cam_log("МОЩНОСТЬ: %d дБм (факт %d), команда приёмника\n", tx_power_dbm, wt_get_tx_power());
         } else if (buf[0] == WT_TYPE_ACK && n >= 5) {
             uint32_t id;
             memcpy(&id, buf + 1, 4);
@@ -234,6 +253,12 @@ static void stats(void)
     float dt = (now - st_t0) / 1000.0f;
     if (dt <= 0) {
         return;
+    }
+    if (st_flood_pkts || st_flood_fail) {
+        cam_log("ЗАЛИВКА: отправлено %lu кбит/с, пакетов %lu, отказов %lu\n",
+                (unsigned long)((uint64_t)st_flood_pkts * WT_FLOOD_LEN * 8 / 1000 / dt),
+                (unsigned long)st_flood_pkts, (unsigned long)st_flood_fail);
+        st_flood_pkts = st_flood_fail = 0;
     }
     int rssi = wt_ap_sta_rssi();
     int nfl = wt_nf_take(&nf);
@@ -344,6 +369,24 @@ void loop()
     if (now - last_stat >= STAT_PERIOD_MS) {
         last_stat = now;
         stats();
+    }
+    if (flood_until_ms && (int32_t)(now - flood_until_ms) >= 0) {
+        flood_until_ms = 0;
+        cam_log("ЗАЛИВКА: время вышло, снова видео\n");
+    }
+    if (flood_until_ms && have_peer) {
+        static uint8_t fp[WT_FLOOD_LEN];
+        fp[0] = WT_TYPE_FLOOD;
+        for (int i = 0; i < 32; i++) {            // пачка, затем снова команды и статистика
+            uint32_t q = ++flood_seq;
+            memcpy(fp + 1, &q, 4);
+            if (send_pkt(fp, WT_FLOOD_LEN)) {
+                st_flood_pkts++;
+            } else {
+                st_flood_fail++;
+            }
+        }
+        return;
     }
     if (!have_peer || (fps_limit && (int32_t)(now - next_frame) < 0)) {
         delay(1);

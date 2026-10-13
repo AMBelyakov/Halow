@@ -15,7 +15,9 @@
 #include <esp_wifi.h>
 
 #define WT_SSID      "THALOW-WIFI-TEST"
-#define WT_PASS      "halowtest1"
+/* 13.10: сеть открытая. С паролем станция находила точку, но рвалась на 4-way handshake
+ * (причина 15) — точка камеры в режиме promiscuous (замер фона). HaLow-канал тоже без шифрования. */
+#define WT_PASS      ""
 /* Канал 2,4 ГГц: выбрать наименее занятый на месте опыта (1, 6 или 11). Одинаков у обеих плат
  * автоматически: станция идёт на канал точки доступа. */
 #define WT_CHANNEL   6
@@ -49,6 +51,15 @@
 #define WT_TYPE_LOG   'T'
 #define WT_TYPE_HELLO 'H'
 #define WT_TYPE_ACK   'A'
+/* 13.10: замер ёмкости канала («заливка»). Видео 5 к/с занимает Wi-Fi на проценты, и
+ * сравнение с HaLow только «одинаковым потоком» прятало главное преимущество Wi-Fi.
+ *   'C' приёмник -> камера: секунды(2, LE) — столько камера льёт вместо видео, 0 — стоп;
+ *   'F' камера -> приёмник: seq(4, LE) + наполнение до 1400 байт. */
+#define WT_TYPE_CMD   'C'
+#define WT_TYPE_FLOOD 'F'
+/* 13.10: 'P' приёмник -> камера: мощность, дБм (1 байт). Камера на powerbank — консоли у неё нет. */
+#define WT_TYPE_PWR   'P'
+#define WT_FLOOD_LEN  1400
 
 static inline void wt_set_protocol(wifi_interface_t ifx)
 {

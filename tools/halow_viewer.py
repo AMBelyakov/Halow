@@ -530,6 +530,14 @@ class State:
                 self.chunks_rx += 1
                 self.fec_m = m
 
+            # 13.10: камера после перезагрузки нумерует кадры с 1, и номера прошлого
+            # включения в closed_set глотали все новые кадры (тест Wi-Fi: перезапуски
+            # каждые минуты). Номер далеко позади последнего закрытого — новое включение.
+            if (frame_id in self.closed_set and self.closed
+                    and max(self.closed) - frame_id > LATE_SPAN):
+                self.closed.clear()
+                self.closed_set.clear()
+                self.last_shown_id = None
             if frame_id in self.closed_set:
                 self.dup_rx += 1         # кадр уже собран или просрочен
                 self._expire(now)
@@ -582,9 +590,27 @@ class State:
                 # разрешение проверить заново.
                 if jpeg[:2] != b"\xff\xd8" or jpeg[-2:] != b"\xff\xd9":
                     self.frames_lost += 1
-                elif crc16(jpeg) != want_crc:
+                # 13.10: камера считает CRC как halow_crc16(buf, (uint16_t)len) — для кадров
+                # > 64 КБ (Wi-Fi-тест, Q70 без автокачества: до 77 КБ) по усечённой длине.
+                # Сверяем так же, иначе целые кадры шли в «ошибки CRC» (30 из 30 проверено).
+                elif crc16(jpeg[:len(jpeg) & 0xFFFF]) != want_crc:
                     self.frames_lost += 1
                     self.frame_crc_err += 1
+                    # 13.10: тест Wi-Fi дал кадры «все куски на месте, CRC не та». Сохраняем
+                    # первые 30 таких кадров с длинами кусков — по ним видно, где порча.
+                    if self.frame_crc_err <= 30:
+                        try:
+                            d = os.path.join("tools", "logs", "bad_frames")
+                            os.makedirs(d, exist_ok=True)
+                            base = os.path.join(d, "%s_%d" % (time.strftime("%H%M%S"), frame_id))
+                            with open(base + ".jpg", "wb") as bf:
+                                bf.write(jpeg)
+                            with open(base + ".txt", "w") as bf:
+                                bf.write("frame_len=%d got=%d want_crc=%04x got_crc=%04x cnt=%d lens=%s\n" % (
+                                    entry["len"], len(jpeg), want_crc, crc16(jpeg), entry["cnt"],
+                                    [len(entry["chunks"][i]) for i in range(entry["cnt"])]))
+                        except OSError:
+                            pass
                 else:
                     # Понадобился повтор — кадр спасён повтором, даже если часть
                     # дыр закрыли контрольные; иначе, если закрывали, — FEC.

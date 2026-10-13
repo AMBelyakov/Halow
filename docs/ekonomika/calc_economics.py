@@ -1,32 +1,34 @@
 # -*- coding: utf-8 -*-
 """Расчёт экономической части ВКР по Wi-Fi HaLow (методика Панагушина В.П. и др., МАИ).
 
-Единственный источник чисел для раздела: build_docx.py импортирует отсюда R.
+13.10: упрощено по образцу принятой экономической части (структура, шесть работ сетевого
+графика, укрупнённая структура затрат). Прежний подробный расчёт (стадии, календарный план,
+калькуляция по девяти статьям) — calc_economics.py.bak-2026-10-13.
+
+Единственный источник чисел для раздела: build_docx.py и network.py импортируют отсюда R.
 Запуск: python calc_economics.py  -> печатает все промежуточные величины.
 """
 from datetime import date, timedelta
 import statistics
 
 # ---------------------------------------------------------------- нормативы 2026
-HOURS_YEAR = 1972            # норма раб. времени 2026, 40-ч неделя (247 дн. x 8 - 4)
+K_CAL = 1.4                  # календарные дни -> рабочие (деление)
 WORKDAYS_YEAR = 247
-HOURS_MONTH = HOURS_YEAR / 12
-T_RD = 8                     # продолжительность рабочего дня, ч
-K_CAL = 1.4                  # перевод рабочих дней в календарные
-VACATION_WD = 20             # 28 календ. дней отпуска = 20 рабочих
-K_DOP = round(VACATION_WD / (WORKDAYS_YEAR - VACATION_WD), 3)   # 0.088
 SOC_RATE = 0.302             # 30 % единый тариф + 0,2 % НС и ПЗ (I класс риска)
-OVERHEAD_RATE = 1.00         # накладные, доля от ФОТ
-OTHER_RATE = 0.10            # прочие, доля от ФОТ
+PREMIUM = 0.20               # премия к основной заработной плате
+VACATION_WD = 20             # 28 календ. дней отпуска = 20 рабочих
+K_DOP = round(VACATION_WD / (247 - VACATION_WD), 3)   # дополнительная зарплата, 0,088
+OVERHEAD_RATE = 1.00         # накладные: k_накл·З_ЗП, 1,0 ≤ k_накл ≤ 2,0 (формула 4.12)
+OTHER_RATE = 0.10            # прочие расходы, доля от ФОТ
 RHO_ZP = 2.00                # рентабельность по отношению к оплате труда (200..400 %)
-PREMIUM = 0.20               # премиальные выплаты к зарплате по тарифу (методичка, п. 4.1)
-ALPHA = 1.0                  # доля эффекта, приходящаяся на разработчика (формула 5.10)
+ALPHA = 1.0                  # доля эффекта, приходящаяся на разработчика
 E_NORM = 0.5                 # нормативный уровень эффективности для наукоёмкой продукции
 DAYS_YEAR = 365
 USD_RUB = 84.1975            # курс ЦБ РФ на 20.09.2026
 NDFL = 0.13                  # пересчёт «на руки» -> начислено
-TARIFF_KWH = 8.90            # ₽/кВт·ч, Москва, одноставочный, с 01.10.2026
-START = date(2026, 10, 9)        # дата выдачи задания на ВКР
+START = date(2026, 10, 9)    # дата выдачи задания на ВКР
+DEADLINE = date(2026, 12, 21)
+
 
 # ---------------------------------------------------------------- вакансии hh.ru (Москва, 24.09.2026)
 # (группа, должность (работодатель), от, до, на руки?)
@@ -65,123 +67,63 @@ def vac_gross(lo, hi, net):
 
 VAC_MEDIAN = {g: statistics.median(vac_gross(lo, hi, n) for gg, _, lo, hi, n in VACANCIES if gg == g)
               for g in ("Р", "И", "Т")}
-VAC_COUNT = {g: sum(1 for v in VACANCIES if v[0] == g) for g in ("Р", "И", "Т")}
 
 # ---------------------------------------------------------------- исполнители
-# (должность, месячный оклад, ₽) — медианы предложений работодателей, округлённые до 100 ₽
+# месячный оклад (медиана предложений hh.ru, округлено до 100 ₽) -> дневная ставка
 STAFF = {
-    "Р": ("Руководитель НИР (к.т.н.)", round(VAC_MEDIAN["Р"], -2)),
-    "И": ("Инженер-исследователь (без опыта работы)", round(VAC_MEDIAN["И"], -2)),
-    "П": ("Инженер-программист (без опыта работы)", round(VAC_MEDIAN["И"], -2)),
-    "Т": ("Техник (без опыта работы)", round(VAC_MEDIAN["Т"], -2)),
+    "Р": ("Руководитель НИР", round(VAC_MEDIAN["Р"], -2)),
+    "И": ("Инженер-исследователь", round(VAC_MEDIAN["И"], -2)),
+    "П": ("Инженер-программист", round(VAC_MEDIAN["И"], -2)),
+    "Т": ("Техник", round(VAC_MEDIAN["Т"], -2)),
 }
-RATE = {k: round(v[1] / HOURS_MONTH) for k, v in STAFF.items()}
+DAY_RATE = {k: round(v[1] * 12 / WORKDAYS_YEAR, -1) for k, v in STAFF.items()}
 
-# ---------------------------------------------------------------- стадии
-# (краткое название, доля %, q, {исполнитель: чел.-ч}, срок по заданию)
+# ---------------------------------------------------------------- этапы и работы
+# Этапы по заданию на ВКР, доля трудоёмкости, %
 STAGES = [
-    ("Сравнительный анализ Wi-Fi HaLow с другими вариантами канала связи с БПЛА", 15, 2,
-     {"Р": 8, "И": 56, "П": 56}, date(2026, 10, 22)),
-    ("Обоснование необходимости эксперимента, методика экспериментов, выбор и настройка "
-     "аппаратных и программных средств", 25, 2,
-     {"Р": 16, "И": 88, "П": 96}, date(2026, 11, 11)),
-    ("Серия экспериментов, сравнение с другими протоколами, в том числе с IEEE 802.11", 40, 3,
-     {"И": 112, "Т": 104, "П": 104}, date(2026, 12, 8)),
-    ("Экономическая часть", 8, 1, {"И": 64}, date(2026, 12, 11)),
-    ("Охрана труда и окружающей среды", 8, 1, {"И": 64}, date(2026, 12, 18)),
-    ("Основные результаты и выводы, предложения по интеграции в существующие модели БПЛА", 4, 2,
-     {"Р": 16, "И": 16}, date(2026, 12, 21)),
+    ("Подготовительная стадия", "Сравнительный анализ Wi-Fi HaLow с другими вариантами канала "
+     "связи с БПЛА"),
+    ("Теоретическая разработка", "Методика экспериментов; программное обеспечение "
+     "экспериментального стенда"),
+    ("Экспериментальные работы", "Серия экспериментов, сравнение с IEEE 802.11 на той же "
+     "аппаратной платформе, обработка результатов"),
+    ("Заключительная стадия", "Экономическая часть, охрана труда, выводы и оформление отчёта"),
 ]
-
-# ---------------------------------------------------------------- работы сетевого графика
-# (событие i, событие j, стадия, наименование, исполнители, ожидаемая продолжительность, кал. дн.)
-# По каждой стадии критический путь равен её длительности в календарных днях (таблица плана).
-NET_WORKS = [
-    (1, 2, 1, "Анализ задач применения БПЛА и требований к каналу связи", "И", 4),
-    (1, 3, 1, "Сбор открытых данных о характеристиках LoRa, IEEE 802.11 и Wi-Fi HaLow", "П", 6),
-    (2, 3, 1, "Сравнение Wi-Fi HaLow с другими вариантами канала связи по дальности, "
-              "пропускной способности, энергопотреблению и проникающей способности", "И", 6),
-    (3, 4, 1, "Рассмотрение результатов сравнительного анализа", "Р", 1),
-    (4, 5, 2, "Обоснование необходимости эксперимента, разработка методики экспериментов", "И", 8),
-    (4, 6, 2, "Обновление встроенного программного обеспечения радиомодулей, разработка программ "
-              "передачи видео и регистрации показателей канала", "П", 14),
-    (5, 7, 2, "Утверждение методики экспериментов", "Р", 1),
-    (6, 7, 2, "Сборка и отладка экспериментального стенда", "И, П", 4),
-    (7, 8, 3, "Измерение показателей канала Wi-Fi HaLow", "И, Т", 9),
-    (7, 9, 3, "Подготовка программ обработки результатов измерений", "П", 6),
-    (8, 9, 3, "Измерение тех же показателей для IEEE 802.11 на той же аппаратной платформе",
-     "И, Т", 5),
-    (9, 10, 3, "Обработка результатов, сравнение с другими протоколами", "И, П", 5),
-    (10, 11, 4, "Экономическая часть", "И", 11),
-    (11, 12, 5, "Охрана труда и окружающей среды", "И", 11),
-    (12, 13, 6, "Основные результаты и выводы, предложения по интеграции в существующие модели БПЛА",
-     "И, Р", 3),
+WORK_STAGE = [1, 2, 2, 3, 3, 4]        # стадия каждой работы WORKS
+# (i, j, наименование, ожидаемая продолжительность, кал. дн., {исполнитель: число})
+# t_ож = (3 t_min + 2 t_max) / 5; t_min = t − 2, t_max = t + 3 (t − 2 и t + 3 дают ровно t)
+WORKS = [
+    (1, 2, "Анализ вариантов канала связи с БПЛА, сравнение Wi-Fi HaLow с LoRa и IEEE 802.11",
+     12, {"И": 1}),
+    (2, 3, "Разработка методики экспериментов", 8, {"И": 1}),
+    (2, 4, "Разработка программного обеспечения стенда: передача видео и регистрация "
+           "показателей канала", 18, {"П": 1}),
+    (4, 5, "Измерение показателей Wi-Fi HaLow и IEEE 802.11 на одной аппаратной платформе",
+     22, {"И": 1, "Т": 1}),
+    (5, 6, "Обработка результатов, сравнение с теоретической оценкой и другими протоколами",
+     8, {"Р": 1, "И": 1}),
+    (6, 7, "Экономическая часть, охрана труда, выводы и оформление отчёта", 13, {"И": 1}),
 ]
+DUMMY = [(3, 4)]                       # фиктивная работа: методика нужна до измерений
 
-
-def t_estimates(t):
-    """Экспертные оценки t_min, t_max, для которых t_ож = (3 t_min + 2 t_max) / 5 равно t."""
-    if t >= 4:
-        return t - 2, t + 3
-    if t >= 2:
-        return t - 1, t + 1.5
-    return 0.5, 1.75
-
-
-def network(stages):
-    """Сетевой график «события — работы»: ранние и поздние сроки событий, резервы,
-    критический путь (кал. дн.)."""
-    events = sorted({w[0] for w in NET_WORKS} | {w[1] for w in NET_WORKS})
-    works = []
-    for i, j, st, name, who, t in NET_WORKS:
-        tmin, tmax = t_estimates(t)
-        assert abs((3 * tmin + 2 * tmax) / 5 - t) < 1e-9
-        works.append(dict(i=i, j=j, stage=st, name=name, who=who, t=t, tmin=tmin, tmax=tmax))
-    early = {}
-    for e in events:                                  # события пронумерованы по порядку
-        early[e] = max([early[w["i"]] + w["t"] for w in works if w["j"] == e], default=0)
-    T_cr = early[events[-1]]
-    late = {e: T_cr for e in events}
-    for e in reversed(events):
-        late[e] = min([late[w["j"]] - w["t"] for w in works if w["i"] == e], default=T_cr)
-    for w in works:
-        w["R"] = late[w["j"]] - early[w["i"]] - w["t"]
-        w["crit"] = w["R"] == 0
-        w["begin"] = START + timedelta(days=early[w["i"]])
-    assert T_cr == sum(s["cal"] for s in stages), (T_cr, [s["cal"] for s in stages])
-    crit_events = [e for e in events if early[e] == late[e]]
-    return dict(works=works, events=events, early=early, late=late, T_cr=T_cr,
-                crit_events=crit_events)
-
-
-# ---------------------------------------------------------------- материалы
-# (наименование, ед., кол-во, цена ₽, источник: 'v' проверено / 'e' оценка)
+# ---------------------------------------------------------------- материалы (для проверки 5 %)
 THALOW_PRICE = round(37.98 * USD_RUB)
-# канцтовары: объём печати за НИР -> бумага и картриджи; мелкая канцелярия — комплектом
-PRINT_SHEETS = 2_500         # записка в нескольких редакциях, методика, протоколы, документация
-TONER_YIELD = 1_600          # ресурс картриджа, страниц при 5 % заполнения
-STATIONERY = [
-    ("Бумага офисная А4, 500 листов", "пачка", -(-PRINT_SHEETS // 500), 550, "e"),
-    ("Картридж для лазерного принтера", "шт.", -(-PRINT_SHEETS // TONER_YIELD), 3_200, "e"),
-    ("Канцелярские принадлежности: ручки, карандаши, скрепки, скобы, файлы, папки, "
-     "тетради для журналов полевых измерений, маркеры", "компл.", 1, 2_500, "e"),
+EVK_PRICE = 39_620                     # Morse Micro MM6108-EKH05, ChipDip, 24.09.2026
+ALFA_USD = 67.97                       # ALFA Network AHPI7292S (Newracom NRC7292), Rokland — для главы 2
+COMPONENTS = [   # покупные комплектующие изделия (наименование, ед., кол-во, цена ₽)
+    ("Отладочная плата LilyGO T-HaLow (ESP32-S3 + TX-AH-R900P)", "шт.", 2, THALOW_PRICE),
+    ("Модуль камеры OV5640 (основной и запасной)", "шт.", 2, 1_100),
+    ("Микросхема флеш-памяти W25Q32JVSSIQ", "шт.", 2, 100),
+    ("Программатор CH341A с зажимом SOIC-8", "шт.", 1, 714),
+    ("Кабель USB Type-C с передачей данных", "шт.", 2, 350),
+    ("Аккумулятор Li-Ion 18650, 3000 мА·ч", "шт.", 4, 450),
+    ("Зарядное устройство для аккумуляторов 18650", "шт.", 1, 900),
 ]
-COMPONENTS = [
-    ("Отладочная плата LilyGO T-HaLow V1.0, ревизия 24-08-23 (ESP32-S3 + TX-AH-R900P, 859–894 МГц)", "шт.", 2, THALOW_PRICE, "v"),
-    ("Модуль камеры OV5640, 24 pin (основной и запасной)", "шт.", 2, 1_100, "e"),
-    ("Микросхема флеш-памяти W25Q32JVSSIQ", "шт.", 2, 100, "v"),
-    ("Программатор CH341A с зажимом SOIC-8", "шт.", 1, 714, "v"),
-    ("Кабель USB Type-C с передачей данных, 1 м", "шт.", 2, 350, "e"),
-    ("Аккумулятор Li-Ion 18650, 3000 мА·ч", "шт.", 4, 450, "e"),
-    ("Зарядное устройство для аккумуляторов 18650", "шт.", 1, 900, "e"),
+MATERIALS = [    # материалы: печать записки, методики, протоколов (~2 500 листов)
+    ("Бумага офисная А4, 500 листов", "пачка", 5, 550),
+    ("Картридж для лазерного принтера", "шт.", 2, 3_200),
+    ("Канцелярские принадлежности, журналы полевых измерений", "компл.", 1, 2_500),
 ]
-PC_POWER_KW = 0.15           # ноутбук + монитор + стенд
-PC_COST = 85_000             # балансовая стоимость ПЭВМ, ₽
-PC_LIFE_Y = 3                # 2-я амортизационная группа (ОКОФ 330.28.23.23)
-
-# ---------------------------------------------------------------- аналоги и база сравнения
-EVK_PRICE = 39_620           # Morse Micro MM6108-EKH05, ChipDip, 24.09.2026
-ALFA_USD = 67.97             # ALFA Network AHPI7292S (Newracom NRC7292), Rokland
 
 # ---------------------------------------------------------------- НТП
 # (признак, значимость R_i, база Q_Б, новая Q_Н)
@@ -190,100 +132,93 @@ NTP = [
     ("Перспективность НТПр", 0.4, 5, 7),
     ("Возможность применения результатов НТПр", 0.2, 3, 8),
 ]
+NOVELTY_SCALE = ["Принципиально новое", "Новое", "Улучшенное", "Существующего уровня", "Устаревшее"]
+NOVELTY_PTS = [5, 3, 2, 1, 0]
+# (критерий, уровень)
+NOVELTY = [("Функциональный", "Новое"), ("Технологический", "Улучшенное"),
+           ("Производственный", "Улучшенное"), ("Социальный", "Существующего уровня"),
+           ("Юридический", "Существующего уровня")]
 
-# ---------------------------------------------------------------- новизна (методичка, табл. 2.4)
-NOVELTY_SCALE = {"принципиально новое": 5, "новое": 3, "улучшенное": 2,
-                 "существующего уровня": 1, "устаревшее": 0}
-# (критерий, оценка, обоснование)
-NOVELTY = [
-    ("Функциональный", "новое",
-     "система передачи видео по Wi-Fi HaLow на серийной плате с одновременной регистрацией показателей канала"),
-    ("Технологический", "улучшенное",
-     "сравнение Wi-Fi HaLow и IEEE 802.11 на одной аппаратной платформе, сопоставление с теоретической оценкой"),
-    ("Производственный", "улучшенное",
-     "стоимость аппаратной платформы стенда снижена по сравнению с оценочным комплектом"),
-    ("Социальный", "существующего уровня", "условия труда исследователя не меняются"),
-    ("Юридический", "существующего уровня", "патентование результатов не предусматривается"),
-]
+
+def network():
+    works = [dict(i=i, j=j, name=nm, t=t, tmin=t - 2, tmax=t + 3, who=who) for i, j, nm, t, who in WORKS]
+    for w in works:
+        assert (3 * w["tmin"] + 2 * w["tmax"]) / 5 == w["t"]
+    arcs = [(w["i"], w["j"], w["t"]) for w in works] + [(i, j, 0) for i, j in DUMMY]
+    events = sorted({a for a, _, _ in arcs} | {b for _, b, _ in arcs})
+    early = {}
+    for e in events:
+        early[e] = max([early[a] + t for a, b, t in arcs if b == e], default=0)
+    T_cr = early[events[-1]]
+    late = {e: T_cr for e in events}
+    for e in reversed(events):
+        late[e] = min([late[b] - t for a, b, t in arcs if a == e], default=T_cr)
+    for w in works:
+        w["R"] = late[w["j"]] - early[w["i"]] - w["t"]
+        w["crit"] = w["R"] == 0
+    par = []                                           # таблица 3.10 методички
+    for a, b, t in arcs:
+        par.append(dict(code=f"{a}–{b}", t=t, trn=early[a], tpn=late[b] - t, tro=early[a] + t,
+                        tpo=late[b], R=late[b] - early[a] - t))
+    crit = [e for e in events if early[e] == late[e]]
+    return dict(works=works, events=events, early=early, late=late, T_cr=T_cr, crit_events=crit,
+                params=par)
 
 
 def compute():
     r = {}
-    # --- НТП
     sR = sum(x[1] for x in NTP)
     r["H_new"] = sum(x[1] * x[3] for x in NTP) / sR
     r["H_base"] = sum(x[1] * x[2] for x in NTP) / sR
-    r["J_exact"] = r["H_new"] / r["H_base"]
-    r["J"] = round(r["J_exact"], 2)
-
-    # --- трудоёмкость и календарь
-    T_total = sum(sum(s[3].values()) for s in STAGES)
-    stages = []
-    day = START
-    for name, share, q, hours, deadline in STAGES:
-        T = sum(hours.values())
-        assert abs(T - share / 100 * T_total) < 1e-9, (name, T, share)
-        tc = T / (T_RD * q)
-        cal = int(tc * K_CAL + 0.5 + 1e-9)                   # округление до целого дня
-        begin, end = day, day + timedelta(days=cal - 1)
-        day = end + timedelta(days=1)
-        zp = sum(h * RATE[k] for k, h in hours.items())
-        stages.append(dict(name=name, share=share, q=q, hours=hours, T=T, tc=tc,
-                           cal=cal, begin=begin, end=end, deadline=deadline,
-                           zp=zp, avg=zp / T))
-        assert end <= deadline, (name, end, deadline)
-    r["stages"], r["T_total"] = stages, T_total
-    r["cal_total"] = sum(s["cal"] for s in stages)
-    r["wd_total"] = sum(s["tc"] for s in stages)
-    r["net"] = network(stages)
-
-    # --- оплата труда
-    r["zp_tarif"] = sum(s["zp"] for s in stages)            # итог по тарифным ставкам
-    r["zp_prem"] = round(r["zp_tarif"] * PREMIUM)
-    r["zp_osn"] = r["zp_tarif"] + r["zp_prem"]
-    r["zp_dop"] = round(r["zp_osn"] * K_DOP)
-    r["fot"] = r["zp_osn"] + r["zp_dop"]
-    r["soc"] = round(r["fot"] * SOC_RATE)
-    r["hours_by"] = {k: sum(s["hours"].get(k, 0) for s in stages) for k in STAFF}
-
-    # --- новизна
-    r["nov_sum"] = sum(NOVELTY_SCALE[lvl] for _, lvl, _ in NOVELTY)
+    r["J"] = round(r["H_new"] / r["H_base"], 2)
+    pts = dict(zip(NOVELTY_SCALE, NOVELTY_PTS))
+    r["nov_sum"] = sum(pts[lvl] for _, lvl in NOVELTY)
     r["nov_max"] = 5 * len(NOVELTY)
     r["novelty"] = r["nov_sum"] / r["nov_max"]
 
-    # --- материальные затраты
-    r["stat_sum"] = sum(q * p for _, _, q, p, _ in STATIONERY)
-    r["comp_sum"] = sum(q * p for _, _, q, p, _ in COMPONENTS)
-    r["pc_hours"] = T_total - r["hours_by"]["Т"]     # техник работает без ПЭВМ
-    r["kwh"] = PC_POWER_KW * r["pc_hours"]
-    r["energy"] = round(r["kwh"] * TARIFF_KWH)
-    r["mat_total"] = r["stat_sum"] + r["comp_sum"] + r["energy"]
+    net = network()
+    r["net"] = net
+    r["T_cal"] = net["T_cr"]
+    r["end"] = START + timedelta(days=r["T_cal"] - 1)
+    assert r["end"] <= DEADLINE, r["end"]
 
-    # --- амортизация
-    r["amort_hour"] = PC_COST / PC_LIFE_Y / HOURS_YEAR
-    r["amort"] = round(r["amort_hour"] * r["pc_hours"])
-
-    # --- накладные, прочие, итог
+    # трудоёмкость и зарплата по стадиям (формы 3.1 и 4.4)
+    st = [dict(name=a, works=b, staff={}, T=0, zp=0) for a, b in STAGES]
+    for w, sn in zip(net["works"], WORK_STAGE):
+        wd = round(w["t"] / K_CAL)                    # рабочие дни работы
+        w["wd"] = wd
+        s_ = st[sn - 1]
+        for who, cnt in w["who"].items():
+            s_["staff"][who] = s_["staff"].get(who, 0) + wd * cnt
+            s_["T"] += wd * cnt
+            s_["zp"] += wd * cnt * DAY_RATE[who]
+    r["T_total"] = sum(x["T"] for x in st)
+    for x in st:
+        x["share"] = x["T"] / r["T_total"] * 100
+        x["avg"] = x["zp"] / x["T"]
+    r["stages"] = st
+    r["zp"] = sum(x["zp"] for x in st)
+    r["zp_osn"] = round(r["zp"] * (1 + PREMIUM))
+    r["zp_dop"] = round(r["zp_osn"] * K_DOP)
+    r["fot"] = r["zp_osn"] + r["zp_dop"]
+    r["soc"] = round(r["fot"] * SOC_RATE)
+    r["comp_sum"] = sum(q * p for _, _, q, p in COMPONENTS)
+    r["mat_sum"] = sum(q * p for _, _, q, p in MATERIALS)
     r["overhead"] = round(r["fot"] * OVERHEAD_RATE)
     r["other"] = round(r["fot"] * OTHER_RATE)
-    r["Z"] = (r["mat_total"] + r["fot"] + r["soc"] + r["amort"]
-              + r["overhead"] + r["other"])
-
-    # --- цена и рентабельность
-    r["profit"] = round(r["fot"] * RHO_ZP)
-    r["price"] = r["Z"] + r["profit"]
+    r["items"] = [("Материалы", r["mat_sum"]), ("Покупные комплектующие изделия", r["comp_sum"]),
+                  ("Заработная плата исполнителей (основная и дополнительная)", r["fot"]),
+                  ("Отчисления на социальные нужды", r["soc"]),
+                  (f"Накладные расходы", r["overhead"]), ("Прочие расходы", r["other"])]
+    r["Z"] = sum(v for _, v in r["items"])
+    r["d_zp"] = (r["fot"] + r["soc"]) / r["Z"]
+    r["price"] = round(r["Z"] + r["fot"] * RHO_ZP)
+    r["profit"] = r["price"] - r["Z"]
     r["rent_cost"] = r["profit"] / r["Z"] * 100
-    r["rent_sales"] = r["profit"] / r["price"] * 100
-
-    # --- эффект
-    r["evk_pair"] = 2 * EVK_PRICE
-    r["thalow_pair"] = 2 * THALOW_PRICE
-    r["dK"] = r["evk_pair"] - r["thalow_pair"]
+    r["dK"] = 2 * EVK_PRICE - 2 * THALOW_PRICE
     r["Z_base"] = r["Z"] + r["dK"]
-    r["ZbJ"] = round(r["Z_base"] * r["J"])
-    r["dE"] = r["ZbJ"] - r["Z"]                                  # числитель формулы 5.3
-    r["T_n"] = round(r["cal_total"] / DAYS_YEAR, 3)             # продолжительность НИР, лет
-    r["E_eff"] = round(r["dE"] / r["T_n"])                       # годовой экономический эффект
+    r["T_n"] = round(r["T_cal"] / DAYS_YEAR, 3)
+    r["E_eff"] = round((r["Z_base"] * r["J"] - r["Z"]) / r["T_n"])
     r["E_lvl"] = round(r["E_eff"] * ALPHA / r["price"], 2)
     r["T_ok"] = round(1 / r["E_lvl"], 2)
     r["T_ok_months"] = round(r["T_ok"] * 12)
@@ -294,14 +229,17 @@ R = compute()
 
 if __name__ == "__main__":
     fmt = lambda x: f"{x:,.0f}".replace(",", " ")
-    print("Медианы вакансий:", {k: round(v) for k, v in VAC_MEDIAN.items()}, VAC_COUNT)
-    print("Оклады:", {k: v[1] for k, v in STAFF.items()}, " ставки, ₽/ч:", RATE)
-    print(f"J={R['J_exact']:.4f} -> {R['J']}")
-    for i, s in enumerate(R["stages"], 1):
-        print(f"{i} T={s['T']:>3} q={s['q']} кал={s['cal']:>3} {s['begin']:%d.%m}–{s['end']:%d.%m} "
-              f"ЗП={fmt(s['zp'])} ср.ставка={s['avg']:.2f}")
-    for k in ("zp_osn", "zp_dop", "fot", "soc", "mat_total", "amort", "overhead", "other",
-              "Z", "profit", "price", "dK", "Z_base", "ZbJ", "E_eff"):
-        print(f"{k:>10} = {fmt(R[k])}")
-    print(f"rent_cost={R['rent_cost']:.1f}% rent_sales={R['rent_sales']:.1f}%  "
-          f"E={R['E_lvl']} T_ok={R['T_ok']} лет = {R['T_ok_months']} мес")
+    print("Оклады:", {k: v[1] for k, v in STAFF.items()}, " дневные ставки:", DAY_RATE)
+    print("J =", R["J"], " новизна", R["nov_sum"], "/", R["nov_max"], "=", round(R["novelty"], 2))
+    for w in R["net"]["works"]:
+        print(f"{w['i']}-{w['j']} t={w['t']} R={w['R']} {'крит' if w['crit'] else ''}")
+    print("T_cr", R["T_cal"], "конец", R["end"])
+    for x in R["stages"]:
+        print(x["name"], x["T"], round(x["share"], 1), x["staff"], round(x["avg"]), x["zp"])
+    for p_ in R["net"]["params"]:
+        print(p_)
+    for k in ("zp", "zp_osn", "zp_dop", "fot", "soc", "comp_sum", "mat_sum", "overhead", "other",
+              "Z", "price", "profit", "dK", "Z_base", "E_eff"):
+        print(f"{k:>9} = {fmt(R[k])}")
+    print("d_zp", round(R["d_zp"], 3), "rent", round(R["rent_cost"], 1))
+    print("T_n", R["T_n"], "E", R["E_lvl"], "T_ok", R["T_ok"], "лет =", R["T_ok_months"], "мес")
