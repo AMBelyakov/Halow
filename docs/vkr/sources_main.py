@@ -110,6 +110,10 @@ SOURCES = {
               "Текст : электронный // GitHub : репозиторий Xinyuan-LilyGO/T-Halow. – URL: "
               "https://github.com/Xinyuan-LilyGO/T-Halow/tree/master/hardware/TX_AH "
               "(дата обращения: 08.10.2026).",
+    "txfreq": "泰芯 802.11AH 频点设置说明 [Описание настройки частот 802.11ah] : версия V2.0 от "
+              "30.11.2023 / Zhuhai Taixin Semiconductor Co., Ltd. – Текст : электронный // GitHub : "
+              "репозиторий Xinyuan-LilyGO/T-Halow. – URL: https://github.com/Xinyuan-LilyGO/T-Halow/"
+              "tree/master/hardware/TX_AH (дата обращения: 15.10.2026).",
     "txbridge": "泰芯 AH 网桥使用说明 [Руководство по использованию моста AH] : версия V1.3.4 от "
                 "07.09.2023 / Zhuhai Taixin Semiconductor Co., Ltd. – Текст : электронный // GitHub : "
                 "репозиторий Xinyuan-LilyGO/T-Halow. – URL: https://github.com/Xinyuan-LilyGO/T-Halow/"
