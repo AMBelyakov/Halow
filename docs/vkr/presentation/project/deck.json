@@ -20,6 +20,7 @@
   "release",
   "capture",
   "field",
+  "range",
   "compare",
   "integration",
   "econ",
@@ -44,7 +45,7 @@
    "start": "throughput"
   },
   "finish": {
-   "description": "Дальность, предложения для БПЛА, экономика и выводы",
+   "description": "Дальность: расчёт и измерение границы связи, предложения для БПЛА, экономика и выводы",
    "start": "field"
   }
  },
