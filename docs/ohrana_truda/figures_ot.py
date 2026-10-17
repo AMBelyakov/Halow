@@ -73,10 +73,32 @@ def room(ax, furniture=True, light_furn=False):
     return r
 
 
-def dim(ax, p1, p2, text, rot=0, fs=9):
-    ax.add_patch(FancyArrowPatch(p1, p2, arrowstyle="<->", mutation_scale=7, linewidth=0.6, color="black"))
-    ax.text((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2, text, ha="center", va="center", fontsize=fs,
-            rotation=rot, backgroundcolor="white", zorder=7)
+def dim(ax, p1, p2, text, rot=0, fs=9, ext=(None, None), over=0.1):
+    """Размер по ГОСТ 2.307: сплошная размерная линия со стрелками до выносных линий, число над
+    ней (у вертикального — слева, снизу вверх). ext — точки объекта, от которых идут выносные
+    линии к концам размерной (None — без выносной); выносная выходит за размерную на over."""
+    for e, p in zip(ext, (p1, p2)):
+        if e is None:
+            continue
+        dx, dy = p[0] - e[0], p[1] - e[1]
+        d = math.hypot(dx, dy) or 1
+        ax.plot([e[0], p[0] + dx / d * over], [e[1], p[1] + dy / d * over], color="black",
+                linewidth=0.4, zorder=7)
+    ax.add_patch(FancyArrowPatch(p1, p2, arrowstyle="<|-|>", mutation_scale=6, linewidth=0.5,
+                                 color="black", shrinkA=0, shrinkB=0, zorder=7))
+    mx, my = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+    if rot == 90:                     # отступ числа от линии — в пунктах, не в единицах рисунка
+        ax.annotate(text, (mx, my), xytext=(-2, 0), textcoords="offset points", ha="right",
+                    va="center", fontsize=fs, rotation=90, zorder=7)
+    else:
+        ax.annotate(text, (mx, my), xytext=(0, 1.5), textcoords="offset points", ha="center",
+                    va="bottom", fontsize=fs, zorder=7)
+
+
+def axis_line(ax, a, b):
+    """Осевая (штрихпунктирная) линия — по ней ставятся размеры до центров светильников."""
+    ax.plot([a[0], b[0]], [a[1], b[1]], color="black", linewidth=0.35, linestyle=(0, (8, 2, 1, 2)),
+            zorder=5)
 
 
 def callout(ax, xy, num, txy, rr=0.17):
@@ -98,10 +120,11 @@ callout(ax, (-T / 2, Y(1.6)), 3, (0.95, Y(2.35)))                     # окно
 callout(ax, (0.04, Y(2.7)), 4, (0.95, Y(2.85)))                       # батарея
 callout(ax, (WV - 0.08, Y(0.14)), 5, (WV - 0.55, Y(0.85)))            # огнетушитель
 callout(ax, (WV, Y(1.0)), 6, (WV + 0.55, Y(1.0)))                     # дверь
-dim(ax, (0, Y(0) + 0.45), (WV, Y(0) + 0.45), f"{fmt(WV)} м")
-dim(ax, (0, Y(LT) - 0.45), (W, Y(LT) - 0.45), f"{fmt(W)} м")
-dim(ax, (WV + 0.6, Y(0)), (WV + 0.6, Y(LT)), f"{fmt(B_R)} м", rot=90)
-dim(ax, (-0.65, Y(0)), (-0.65, Y(B_L)), f"{fmt(B_L)} м", rot=90)
+dim(ax, (0, Y(0) + 0.45), (WV, Y(0) + 0.45), f"{fmt(WV)} м", ext=((0, Y(0) + T), (WV, Y(0) + T)))
+dim(ax, (0, Y(LT) - 0.45), (W, Y(LT) - 0.45), f"{fmt(W)} м", ext=((0, Y(B_L) - T), (W, Y(B_R) - T)))
+dim(ax, (WV + 0.6, Y(0)), (WV + 0.6, Y(LT)), f"{fmt(B_R)} м", rot=90,
+    ext=((WV + T, Y(0)), (W + T, Y(B_R))))
+dim(ax, (-0.65, Y(0)), (-0.65, Y(B_L)), f"{fmt(B_L)} м", rot=90, ext=((-T, Y(0)), (-T, Y(B_L))))
 ax.text(2.0, Y(5.9), f"S = {fmt(R['S'])} м²", fontsize=10, style="italic", ha="center")
 ax.set_xlim(-1.0, WV + 1.4); ax.set_ylim(Y(LT) - 0.8, Y(0) + 0.8)
 fig.subplots_adjust(0, 0, 1, 1)
@@ -120,15 +143,19 @@ for xc in xs:
                                linewidth=1.0, zorder=6))
         ax.plot([xc - 0.3, xc + 0.3], [Y(yc) - 0.3, Y(yc) + 0.3], color="black", linewidth=0.6, zorder=6)
         ax.plot([xc - 0.3, xc + 0.3], [Y(yc) + 0.3, Y(yc) - 0.3], color="black", linewidth=0.6, zorder=6)
-yb = Y(LT) - 0.35
-dim(ax, (0, yb), (xs[0], yb), f"{fmt(R['l_B'], 2)}", fs=8)
+# оси рядов светильников (штрихпунктир) — от них идут размеры до центров
+yb, xd = Y(LT) - 0.4, -0.55
+for xc in xs:
+    axis_line(ax, (xc, Y(0) + 0.1), (xc, yb - 0.1))
+for yc in ys:
+    axis_line(ax, (xd - 0.1, Y(yc)), (xs[-1] + 0.45, Y(yc)))
+dim(ax, (0, yb), (xs[0], yb), f"{fmt(R['l_B'], 2)}", fs=8, ext=((0, Y(B_L) - T), None))
 dim(ax, (xs[0], yb), (xs[1], yb), f"{fmt(R['L_B'], 2)}", fs=8)
-dim(ax, (xs[1], yb), (W, yb), f"{fmt(R['l_B'], 2)}", fs=8)
-xd = -0.55
-dim(ax, (xd, Y(0)), (xd, Y(ys[0])), f"{fmt(R['l_A'], 2)}", rot=90, fs=8)
+dim(ax, (xs[1], yb), (W, yb), f"{fmt(R['l_B'], 2)}", fs=8, ext=(None, (W, Y(B_R) - T)))
+dim(ax, (xd, Y(0)), (xd, Y(ys[0])), f"{fmt(R['l_A'], 2)}", rot=90, fs=8, ext=((-T, Y(0)), None))
 for k in range(R["per_row"] - 1):
     dim(ax, (xd, Y(ys[k])), (xd, Y(ys[k + 1])), f"{fmt(R['L_A'], 2)}", rot=90, fs=8)
-dim(ax, (xd, Y(ys[-1])), (xd, Y(B_L)), f"{fmt(R['l_A'], 2)}", rot=90, fs=8)
+dim(ax, (xd, Y(ys[-1])), (xd, Y(B_L)), f"{fmt(R['l_A'], 2)}", rot=90, fs=8, ext=(None, (-T, Y(B_L))))
 ax.set_xlim(-1.0, WV + 0.4); ax.set_ylim(Y(LT) - 0.6, Y(0) + 0.4)
 fig.subplots_adjust(0, 0, 1, 1)
 fig.savefig("lights.png")
@@ -143,13 +170,15 @@ SEAT = 450
 ED = C.EYE_SCREEN_MM
 desk_x0, desk_x1 = 0, 700
 INK = "#444444"
-# стол и пространство для ног
+# стол
 ax.add_patch(Rectangle((desk_x0, DH - 25), desk_x1, 25, facecolor=GRAY, edgecolor="black", linewidth=0.8))
 ax.add_patch(Rectangle((desk_x0, 0), 30, DH - 25, facecolor=GRAY, edgecolor="black", linewidth=0.8))
-ax.plot([desk_x1 - 500, desk_x1 - 500], [0, 650], color=WALL, linewidth=0.6, linestyle="--")
-ax.plot([desk_x1 - 500, desk_x1], [650, 650], color=WALL, linewidth=0.6, linestyle="--")
+# пространство для ног (как на рисунке компоновки у Ерофеевой): высота LEG_H, глубина LEG_D
+LEG_H, LEG_D = C.LEG_SPACE
+ax.plot([desk_x1 - LEG_D] * 2, [0, LEG_H], color=WALL, linewidth=0.6, linestyle="--")
+ax.plot([desk_x1 - LEG_D, desk_x1], [LEG_H, LEG_H], color=WALL, linewidth=0.6, linestyle="--")
 # человек: таз, колено, голеностоп, плечо, шея, голова, локоть, кисть (мм)
-hip, knee, ankle = (920, SEAT + 30), (450, SEAT + 50), (430, 80)
+hip, knee, ankle = (920, SEAT + 30), (450, SEAT + 50), (440, 35)
 shoulder, neck_top = (950, 1030), (930, 1110)
 head_c, head_r = (900, 1195), 90
 eye = (835, 1180)
@@ -167,11 +196,14 @@ ax.add_patch(Rectangle((desk_x1 - 280, DH), 230, C.KB_H, facecolor="white", edge
 ax.add_patch(Rectangle((640, SEAT - 40), 440, 40, facecolor="white", edgecolor="black", linewidth=0.8))
 ax.add_patch(Polygon([(1000, SEAT), (1040, SEAT), (1100, SEAT + 520), (1060, SEAT + 520)],
                      closed=True, facecolor="white", edgecolor="black", linewidth=0.8))
-ax.plot([860, 860], [60, SEAT - 40], color="black", linewidth=2)
-ax.plot([680, 1040], [60, 60], color="black", linewidth=2)
+ax.plot([860, 860], [50, SEAT - 40], color="black", linewidth=2)           # стойка
+ax.plot([680, 1040], [50, 50], color="black", linewidth=2)                 # крестовина
+for xw in (690, 1030):                                                     # колёсики на полу
+    ax.add_patch(Circle((xw, 22), 22, facecolor="white", edgecolor="black", linewidth=0.8, zorder=2))
 for a, b in ((hip, knee), (knee, ankle), (hip, shoulder), (shoulder, neck_top), (shoulder, elbow), (elbow, hand)):
     ax.plot([a[0], b[0]], [a[1], b[1]], color=INK, linewidth=5, solid_capstyle="round")
-ax.plot([ankle[0], ankle[0] - 120], [30, 30], color=INK, linewidth=5, solid_capstyle="round")
+ax.plot([ankle[0] + 15, ankle[0] - 120], [ankle[1], ankle[1]], color=INK, linewidth=5,
+        solid_capstyle="round")                                            # стопа от голеностопа
 ax.add_patch(Circle(head_c, head_r, facecolor="white", edgecolor=INK, linewidth=2, zorder=3))
 ax.plot(*eye, "o", color="black", markersize=2.5, zorder=4)
 # линия взгляда и горизонталь
@@ -180,15 +212,17 @@ ax.plot([eye[0], scr[0] - 60], [eye[1], eye[1]], color="black", linewidth=0.5, l
 ax.text(eye[0] - 190, eye[1] - 50, f"{C.MON_ANGLE}°", fontsize=8.5)
 ax.plot([-100, 1420], [0, 0], color="black", linewidth=1.2)
 # размеры
-dim(ax, (-80, 0), (-80, DH), f"{DH}", rot=90)
-dim(ax, (1200, 0), (1200, SEAT), f"{SEAT}", rot=90)
-dim(ax, (desk_x1 - 500, 250), (desk_x1, 250), "500", fs=8.5)
-dim(ax, (desk_x1 - 520, 0), (desk_x1 - 520, 650), "650", rot=90, fs=8.5)
+dim(ax, (-80, 0), (-80, DH), f"{DH}", rot=90, ext=(None, (desk_x0, DH)), over=25)
+dim(ax, (1200, 0), (1200, SEAT), f"{SEAT}", rot=90, ext=(None, (1080, SEAT)), over=25)
+dim(ax, (desk_x1 - LEG_D - 60, 0), (desk_x1 - LEG_D - 60, LEG_H), f"{LEG_H}", rot=90, fs=8.5,
+    ext=(None, (desk_x1 - LEG_D, LEG_H)), over=25)
+dim(ax, (desk_x1 - LEG_D, -75), (desk_x1, -75), f"{LEG_D}", fs=8.5,
+    ext=((desk_x1 - LEG_D, 0), (desk_x1, DH - 25)), over=25)
 ax.text((scr[0] + eye[0]) / 2 - 90, (scr[1] + eye[1]) / 2 + 10, f"{ED}", ha="center", va="bottom",
         fontsize=9, rotation=math.degrees(ang))
-dim(ax, (1340, 0), (1340, eye[1]), "1130–1220", rot=90)
+dim(ax, (1340, 0), (1340, eye[1]), "1130–1220", rot=90, ext=(None, (head_c[0] + head_r + 15, eye[1])), over=25)
 ax.set_xlim(-180, 1420)
-ax.set_ylim(-60, head_c[1] + head_r + 60)
+ax.set_ylim(-130, head_c[1] + head_r + 60)
 fig.subplots_adjust(0, 0, 1, 1)
 fig.savefig("layout.png")
 plt.close(fig)
@@ -221,8 +255,8 @@ for rad, lab in ((350, "А"), (500, "Б"), (650, "В")):
     sx, sy = shoulders[0]
     ax.text(sx + (rad - 55) * math.cos(math.radians(152)), sy + (rad - 55) * math.sin(math.radians(152)), lab,
             fontsize=9.5, weight="bold", ha="center", va="center", zorder=5)
-dim(ax, (0, -560), (DWm, -560), f"{DWm}", fs=8.5)
-dim(ax, (DWm + 70, 0), (DWm + 70, DDm), f"{DDm}", rot=90, fs=8.5)
+dim(ax, (0, -560), (DWm, -560), f"{DWm}", fs=8.5, ext=((0, 0), (DWm, 0)), over=25)
+dim(ax, (DWm + 90, 0), (DWm + 90, DDm), f"{DDm}", rot=90, fs=8.5, ext=((DWm, 0), (DWm, DDm)), over=25)
 ax.set_xlim(-120, DWm + 160)
 ax.set_ylim(-640, DDm + 160)
 fig.subplots_adjust(0, 0, 1, 1)
