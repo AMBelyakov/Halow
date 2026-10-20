@@ -282,20 +282,23 @@ S["release"] = content("release", 11, "Итоговые результаты п�
     "Итог на 5 метрах: 1063 кбит/с полезного видео 480 на 320, 5 кадров в секунду, потеряно 1,4 % видеокадров при мощности 1 дБм. Задержка по квитанции — 0,34–0,50 секунды в медиане, уровень сигнала — минус 53 дБм. PER модуля 50–67 % — это доля неудачных попыток радио, включая повторы и агрегированные кадры без блочного подтверждения, а не потери видео. Канал гуляет в разы по времени суток, поэтому три главные доработки проверены чередованием в одном включении: гибрид кодирования и досылки, инерция управления качеством и граница модуляции по уровню сигнала.")
 
 # ------------------------------------------------------------------ 12 захват
-S["capture"] = content("capture", 12, "Искажение кадров — наводка собственного передатчика", f'''<div style="display:flex; gap:64px; align-items:start">
-<div style="display:flex; flex-direction:column; gap:24px">
-<div style="display:flex; gap:64px">
-{stat("0 %", "повреждённых видеокадров при 1 дБм (0 из 720)", color=BLUE, size=120)}
-{stat("44 %", "при 20 дБм (512 из 1151)", color=ORANGE, size=120)}
+# 19.10: «поехал» — три равные карточки в сетке вместо вложенных рядов без ширины
+S["capture"] = content("capture", 12, "Искажение кадров — наводка собственного передатчика", f'''<div style="display:grid; grid-template-columns:1fr 1fr 1.4fr; gap:32px; align-items:stretch">
+<div style="{CARD}; padding:40px; display:flex; flex-direction:column; gap:16px">
+<p style="font-size:120px; font-weight:700; line-height:1.05; color:{BLUE}">0 %</p>
+<p style="font-size:28px; line-height:1.4; color:{BODY}">повреждённых видеокадров при 1 дБм<br>(0 из 720)</p>
 </div>
-<p style="font-size:24px; line-height:1.4; color:{BODY}">Лабораторный этап: помещение, 866 МГц, канал 4 МГц, 20 дБм — вне рамок ГКРЧ. В разрешённых пределах: 40–60 % при 10 дБм на 320×240.</p>
+<div style="{CARD}; padding:40px; display:flex; flex-direction:column; gap:16px">
+<p style="font-size:120px; font-weight:700; line-height:1.05; color:{ORANGE}">44 %</p>
+<p style="font-size:28px; line-height:1.4; color:{BODY}">при 20 дБм<br>(512 из 1151)</p>
 </div>
-<div style="flex:1; {CARD}; padding:40px; display:flex; flex-direction:column; gap:16px">
+<div style="{CARD}; padding:40px; display:flex; flex-direction:column; gap:16px">
 <h3 style="font-size:32px; font-weight:600; line-height:1.2; color:{DARK}">Защита в итоговой версии — без пайки</h3>
 <p style="font-size:24px; line-height:1.4; color:{BODY}">Регулятор мощности 1–14 дБм по SNR 20–30 дБ; съёмка в паузах передачи от 8 дБм; ток выходов сенсора ×1; программная правка сдвига байта</p>
-<p style="font-size:24px; line-height:1.4; color:{BODY}">5 м: 1 дБм в 45 из 49 отчётов, 0 искажённых из 2786</p>
+<p style="font-size:24px; line-height:1.4; color:{DARK}">5 м: 1 дБм в 45 из 49 отчётов, 0 искажённых из 2786</p>
 </div>
-</div>''',
+</div>
+<p style="font-size:24px; line-height:1.4; color:{BODY}">Лабораторный этап: помещение, 866 МГц, канал 4 МГц, 20 дБм — вне рамок ГКРЧ. В разрешённых пределах: 40–60 % при 10 дБм на 320×240.</p>''',
     "Часть видеокадров приходила с цветными полосами: в потоке с камеры терялся один байт. Опыт, где менялась только мощность передатчика, дал ответ: при 1 дБм повреждений ноль, при 20 — 44 процента. Это лабораторные условия вне ГКРЧ, но и в разрешённых пределах при 10 дБм на 320 на 240 искажено 40–60 процентов. В итоговой версии защита программная: регулятор держит мощность минимально достаточной, от 8 дБм камера снимает в паузах передачи, ток выходов сенсора снижен, а правка сдвига байта остаётся страховкой.")
 
 # ================================================================== ВЫВОДЫ ПО СПЕЦЧАСТИ
@@ -443,20 +446,38 @@ S["throughput"] = content("throughput", 0, "Пропускная способн�
 <p style="font-size:26px; line-height:1.4; color:{BODY}">Эфир занят на 99 %, треть первых передач теряется даже при SNR 26–36 дБ; процессор модуля простаивает 92–93 %.</p>''',
     f"Исходно платформа давала 121 кбит/с. На лабораторном этапе узкие места были внутри платы: драйвер UART модуля терял 89,5 % байтов, мешали паузы между фрагментами и опрос приёма. Дальше — законный канал и 5 метров: выключение RTS/CTS удвоило поток, двухъядерный кодер открыл 480 на 320, доработки канала дали 1063 кбит/с полезного видео. Справа три числа: радиоканал 2 МГц способен на 6,5 Мбит/с, UART пропустит не больше {num(UART_MAX, 2)}, достигнуто 1,06. Ограничивает уже не плата, а радиоканал: эфир занят на 99 процентов, около трети первых передач не доходит даже при сильном сигнале.")
 
-S["field"] = content("field", 0, "Расчётная дальность и проникающая способность", f'''<div style="display:flex; gap:40px; align-items:start">
-<div style="background:#FFFFFF; border:1px solid #E0DDD4; border-radius:16px; padding:16px">
-<img src="{IMG_HEAT}" alt="Тепловая карта: наибольшая скорость физического уровня Wi-Fi HaLow, Wi-Fi 2,4 ГГц и LoRa на расстояниях 0,1–20 км для свободного пространства, антенн у земли и антенны на борту на 50 м" style="width:700px; height:600px; object-fit:contain">
-</div>
-<div style="flex:1; display:flex; flex-direction:column; gap:24px">
-<div style="background:#FFFFFF; border:1px solid #E0DDD4; border-radius:16px; padding:12px">
-<img src="{IMG_WALL}" alt="Потери в бетонной стене: 8,5 дБ на 0,867 ГГц, 14,8 дБ на 2,44 ГГц, 27,0 дБ на 5,5 ГГц" style="width:640px; height:300px; object-fit:contain">
-</div>
-<p style="font-size:26px; line-height:1.4; color:{DARK}">У земли все технологии теряют дальность в разы; антенна на борту на 50 м возвращает её. На малых скоростях Wi-Fi HaLow — до 5 км, Wi-Fi 2,4 ГГц — до 2 км.</p>
-<p style="font-size:26px; line-height:1.4; color:{BODY}">Бетонная стена гасит 867 МГц на 6,3 дБ меньше, чем 2,4 ГГц. Измеренная граница пары плат — на следующем слайде.</p>
-<p style="font-size:24px; line-height:1.4; color:{FOOT}">Расчёт автора: нормы мощности РФ, антенны 0 дБи, запас 10 дБ.</p>
-</div>
-</div>''',
-    "Сначала расчёт: бюджет канала по паспортам обоих радиотрактов платы. Тепловая карта показывает для каждого расстояния наибольшую скорость, при которой связь сохраняется с запасом 10 децибел, для свободного пространства, антенн у земли и антенны на борту на 50 метрах. У земли за точкой излома все технологии теряют дальность в разы, подъём антенны её возвращает. На малых скоростях Wi-Fi HaLow держит связь до 5 километров, Wi-Fi 2,4 гигагерца — до двух. Справа — проникающая способность: бетонная стена ослабляет 867 мегагерц на 8,5 децибела, 2,4 гигагерца — на 14,8. Это возможности радиомодулей; границу нашей пары плат мы измерили — следующий слайд.")
+# 19.10: тепловая карта картинкой 700 × 600 нечитаема с экрана — та же карта таблицей слайда,
+# значения и цвета — из figures_main.rate_heatmap (рис. ВКР); стена — строкой
+sys.path.insert(0, os.path.join(HERE, ".."))
+with contextlib.redirect_stdout(io.StringIO()):
+    import figures_main as FM                                    # noqa: E402
+from matplotlib.colors import LinearSegmentedColormap, LogNorm, to_hex  # noqa: E402
+_cmap = LinearSegmentedColormap.from_list("blue", ["#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])
+_norm = LogNorm(vmin=1e-4, vmax=100)
+_scen = ["Прямая видимость", "Антенны у земли", "Борт на 50 м"]
+_tech = ["Wi-Fi HaLow", "Wi-Fi 2,4 ГГц", "LoRa"]
+_rows = ['<tr style="background:#E4E1D8"><th style="width:17%">Условия</th><th style="width:16%">Технология / км</th>'
+         + "".join(f'<th style="width:7.4%; text-align:center">{f"{d:g}".replace(".", ",")}</th>'
+                   for d in FM.DISTS_KM) + "</tr>"]
+for si, (_t, h1, h2) in enumerate(FM.SCENARIOS):
+    for ti, (_n, f, _c, _m, modes) in enumerate(FM.TECH):
+        tds = [f'<td style="color:{DARK}">{_scen[si] if ti == 0 else ""}</td>',
+               f'<td style="color:{BODY}">{_tech[ti]}</td>']
+        for d in FM.DISTS_KM:
+            r = FM.best_rate(modes, f, d, h1, h2)
+            bg = "#F0EFEC" if r is None else to_hex(_cmap(_norm(r))).upper()
+            fg = "#FFFFFF" if r is not None and _norm(r) > 0.55 else DARK
+            txt = FM.fmt_rate(r).replace(" ", NBSP)
+            if r and r >= FM.VIDEO_MBPS:
+                txt = f"<b>{txt}</b>"
+            tds.append(f'<td style="background:{bg}; color:{fg}; text-align:center">{txt}</td>')
+        top = ' style="border-top:3px solid #F7F6F2"' if ti == 0 and si else ""
+        _rows.append(f"<tr{top}>" + "".join(tds) + "</tr>")
+HEAT_TABLE = (f'<table style="font-size:26px; color:{DARK}; {FONT}">\n' + "\n".join(_rows) + "\n</table>")
+WALL = {f: 5 + 4 * f for f in (0.867, 2.44)}
+S["field"] = content("field", 0, "Расчётная дальность и проникающая способность", f'''{HEAT_TABLE}
+<p style="font-size:24px; line-height:1.4; color:{BODY}">Наибольшая скорость, при которой связь сохраняется с запасом 10 дБ (к — кбит/с, М — Мбит/с), по расстоянию в км; <b>жирным</b> — не ниже видеопотока стенда 1063 кбит/с. Бетонная стена: {num(WALL[0.867], 1)} дБ на 867 МГц против {num(WALL[2.44], 1)} дБ на 2,44 ГГц. Расчёт автора: нормы мощности РФ, антенны 0 дБи.</p>''',
+    "Сначала расчёт: бюджет канала по паспортам обоих радиотрактов платы. Таблица показывает для каждого расстояния наибольшую скорость, при которой связь сохраняется с запасом 10 децибел, для прямой видимости, антенн у земли и антенны на борту на 50 метрах. У земли за точкой излома все технологии теряют дальность в разы, подъём антенны её возвращает. На малых скоростях Wi-Fi HaLow держит связь до 5 километров, Wi-Fi 2,4 гигагерца — до двух. Проникающая способность: бетонная стена ослабляет 867 мегагерц на 8,5 децибела, 2,4 гигагерца — на 14,8. Это возможности радиомодулей; границу нашей пары плат мы измерили — следующий слайд.")
 
 ORDER = ["cover", "relevance", "goal", "niche", "theory", "whyexp", "stand", "program",
          "throughput", "release", "capture", "field", "range", "integration", "econ", "conclusions",

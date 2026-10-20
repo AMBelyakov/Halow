@@ -310,8 +310,9 @@ class VkrDoc:
 
     # ---------------------------------------------------------- таблицы
     def table(self, caption, widths_mm, rows, header_rows=1, size=12, hsize=None, align=None,
-              merges=(), bold_rows=()):
-        """rows: список строк; ячейка — str или ('h', str) для выделения жёлтым."""
+              merges=(), bold_rows=(), vertical=(), row_heights=None):
+        """rows: список строк; ячейка — str или ('h', str) для выделения жёлтым.
+        vertical — ячейки (r, c) с текстом снизу вверх; row_heights — {строка: мм}."""
         self.tcount += 1
         num = f"{self.ch}.{self.tcount}"
         self.para(f"Таблица {num} – {caption}", indent=False).style = self.doc.styles["TableCaption"]
@@ -363,6 +364,19 @@ class VkrDoc:
             for p in merged.paragraphs[1:]:      # пустые абзацы слитых ячеек; перенос строк — оставить
                 if not p.text.strip():
                     p._p.getparent().remove(p._p)
+        for (r, c) in vertical:                   # шапки «как у Ерофеевой»: текст снизу вверх
+            tcPr = t.cell(r, c)._tc.get_or_add_tcPr()
+            td = OxmlElement("w:textDirection")
+            td.set(qn("w:val"), "btLr")
+            tcPr.append(td)
+            for p in t.cell(r, c).paragraphs:
+                p.alignment = CENTER
+        for ri, h in (row_heights or {}).items():
+            trPr = t.rows[ri]._tr.get_or_add_trPr()
+            th = OxmlElement("w:trHeight")
+            th.set(qn("w:val"), str(int(h / 25.4 * 1440)))
+            th.set(qn("w:hRule"), "atLeast")
+            trPr.append(th)
         # после слияния: у продолжений слитых ячеек свои пустые абзацы
         if len(rows) <= 15:                       # небольшая таблица не разрывается
             for tr in t.rows[:-1]:

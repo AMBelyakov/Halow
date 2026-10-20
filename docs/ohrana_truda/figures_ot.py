@@ -178,27 +178,33 @@ LEG_H, LEG_D = C.LEG_SPACE
 ax.plot([desk_x1 - LEG_D] * 2, [0, LEG_H], color=WALL, linewidth=0.6, linestyle="--")
 ax.plot([desk_x1 - LEG_D, desk_x1], [LEG_H, LEG_H], color=WALL, linewidth=0.6, linestyle="--")
 # человек: таз, колено, голеностоп, плечо, шея, голова, локоть, кисть (мм)
-hip, knee, ankle = (920, SEAT + 30), (450, SEAT + 50), (440, 35)
-shoulder, neck_top = (950, 1030), (930, 1110)
+hip, knee, ankle = (920, SEAT + 10), (450, SEAT + 30), (440, 9)     # бедро на сиденье, стопа на полу
+shoulder, neck_top = (965, 1030), (935, 1110)    # спина откинута на спинку
 head_c, head_r = (900, 1195), 90
 eye = (835, 1180)
 elbow, hand = (880, 775), (620, DH + 40)
 # монитор: центр экрана на расстоянии ED от глаз, линия взгляда наклонена на MON_ANGLE
 ang = math.radians(C.MON_ANGLE)
 scr = (eye[0] - ED * math.cos(ang), eye[1] - ED * math.sin(ang))
-ax.add_patch(Polygon([(scr[0] - 25, scr[1] - 170), (scr[0] + 5, scr[1] - 170), (scr[0] + 30, scr[1] + 140),
-                      (scr[0], scr[1] + 140)], closed=True, facecolor="black"))
-ax.plot([scr[0] - 10, scr[0] - 10], [DH, scr[1] - 170], color="black", linewidth=2)
-ax.add_patch(Rectangle((scr[0] - 80, DH), 150, 12, facecolor="black"))
+# экран: MON_TILT — отклонение верхнего края от пользователя (0 — вертикально)
+tl = math.radians(C.MON_TILT)
+u, nv = (-math.sin(tl), math.cos(tl)), (math.cos(tl), math.sin(tl))      # вдоль экрана вверх / к пользователю
+SL, SW = 155, 15                                                          # полувысота / полутолщина экрана
+ax.add_patch(Polygon([(scr[0] + a * SL * u[0] + b * SW * nv[0], scr[1] + a * SL * u[1] + b * SW * nv[1])
+                      for a, b in ((-1, -1), (-1, 1), (1, 1), (1, -1))], closed=True, facecolor="black"))
+bot = (scr[0] - SL * u[0], scr[1] - SL * u[1])
+ax.plot([bot[0], bot[0]], [DH, bot[1]], color="black", linewidth=2)
+ax.add_patch(Rectangle((bot[0] - 75, DH), 150, 12, facecolor="black"))
 # клавиатура
 ax.add_patch(Rectangle((desk_x1 - 280, DH), 230, C.KB_H, facecolor="white", edgecolor="black", linewidth=0.7))
 # кресло
-ax.add_patch(Rectangle((640, SEAT - 40), 440, 40, facecolor="white", edgecolor="black", linewidth=0.8))
-ax.add_patch(Polygon([(1000, SEAT), (1040, SEAT), (1100, SEAT + 520), (1060, SEAT + 520)],
+ax.add_patch(Rectangle((600, SEAT - 40), 400, 40, facecolor="white", edgecolor="black", linewidth=0.8))
+# спинка вплотную к спине: человек сидит, опираясь на неё
+ax.add_patch(Polygon([(929, SEAT), (969, SEAT), (1010, SEAT + 520), (970, SEAT + 520)],
                      closed=True, facecolor="white", edgecolor="black", linewidth=0.8))
-ax.plot([860, 860], [50, SEAT - 40], color="black", linewidth=2)           # стойка
-ax.plot([680, 1040], [50, 50], color="black", linewidth=2)                 # крестовина
-for xw in (690, 1030):                                                     # колёсики на полу
+ax.plot([800, 800], [50, SEAT - 40], color="black", linewidth=2)           # стойка
+ax.plot([640, 960], [50, 50], color="black", linewidth=2)                  # крестовина
+for xw in (650, 950):                                                     # колёсики на полу
     ax.add_patch(Circle((xw, 22), 22, facecolor="white", edgecolor="black", linewidth=0.8, zorder=2))
 for a, b in ((hip, knee), (knee, ankle), (hip, shoulder), (shoulder, neck_top), (shoulder, elbow), (elbow, hand)):
     ax.plot([a[0], b[0]], [a[1], b[1]], color=INK, linewidth=5, solid_capstyle="round")
@@ -207,13 +213,14 @@ ax.plot([ankle[0] + 15, ankle[0] - 120], [ankle[1], ankle[1]], color=INK, linewi
 ax.add_patch(Circle(head_c, head_r, facecolor="white", edgecolor=INK, linewidth=2, zorder=3))
 ax.plot(*eye, "o", color="black", markersize=2.5, zorder=4)
 # линия взгляда и горизонталь
-ax.plot([eye[0], scr[0] + 15], [eye[1], scr[1]], color="black", linewidth=0.7, linestyle="-.")
+ax.plot([eye[0], scr[0] + SW * nv[0]], [eye[1], scr[1] + SW * nv[1]], color="black", linewidth=0.7,
+        linestyle="-.")
 ax.plot([eye[0], scr[0] - 60], [eye[1], eye[1]], color="black", linewidth=0.5, linestyle=":")
 ax.text(eye[0] - 190, eye[1] - 50, f"{C.MON_ANGLE}°", fontsize=8.5)
 ax.plot([-100, 1420], [0, 0], color="black", linewidth=1.2)
 # размеры
 dim(ax, (-80, 0), (-80, DH), f"{DH}", rot=90, ext=(None, (desk_x0, DH)), over=25)
-dim(ax, (1200, 0), (1200, SEAT), f"{SEAT}", rot=90, ext=(None, (1080, SEAT)), over=25)
+dim(ax, (1200, 0), (1200, SEAT), f"{SEAT}", rot=90, ext=(None, (1000, SEAT)), over=25)
 dim(ax, (desk_x1 - LEG_D - 60, 0), (desk_x1 - LEG_D - 60, LEG_H), f"{LEG_H}", rot=90, fs=8.5,
     ext=(None, (desk_x1 - LEG_D, LEG_H)), over=25)
 dim(ax, (desk_x1 - LEG_D, -75), (desk_x1, -75), f"{LEG_D}", fs=8.5,
