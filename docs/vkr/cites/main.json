@@ -39,5 +39,6 @@
  "esp32cam",
  "meshtastic",
  "elrsrange",
- "elrshealth"
+ "elrshealth",
+ "weissberger"
 ]

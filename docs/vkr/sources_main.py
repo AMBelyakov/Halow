@@ -129,6 +129,10 @@ SOURCES = {
     "esp32cam": "ESP32-CAM Performance Reference Benchmark : dataset / TNeutron. – 2025. – Текст : "
                 "электронный // GitHub : [сайт]. – URL: https://github.com/TNeutron/"
                 "ESP32-CAM-Performence-Reference-Benchmark (дата обращения: 08.10.2026).",
+    "weissberger": "Weissberger, M. A. An initial critical summary of models for predicting the "
+                   "attenuation of radio waves by trees / M. A. Weissberger. – Annapolis : "
+                   "Electromagnetic Compatibility Analysis Center, 1982. – (ESD-TR-81-101). – Текст : "
+                   "непосредственный.",
     "tr38901": "Sionna : src/sionna/phy/channel/tr38901/lsp.py (модель потерь проникновения 3GPP "
                "TR 38.901, п. 7.4.3.1) / NVIDIA (NVlabs). – Текст : электронный // GitHub : [сайт]. – "
                "URL: https://github.com/NVlabs/sionna (дата обращения: 08.10.2026).",

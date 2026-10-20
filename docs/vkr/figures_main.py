@@ -60,7 +60,7 @@ def stand_scheme(path="fig_stand.png"):
 
     # верхний ряд — камера (бортовой узел, модуль в режиме точки доступа)
     box(1, 38, 22, 20, "Камера OV5640", "RGB565,\n480 × 320")
-    box(35, 38, 30, 20, "ESP32-S3 камеры", "сжатие JPEG (2 ядра),\nфрагменты ≤ 1400 Б,\nFEC и досылка")
+    box(35, 38, 30, 20, "ESP32-S3 камеры", "сжатие JPEG (2 ядра),\nфрагменты ≤ 1400 Б,\nFEC: контрольные\nфрагменты, досылка")
     box(77, 38, 22, 20, "Модуль\nTX-AH-R900P", "\n\nточка доступа (AP)", accent=True)
     arrow(23.8, 48, 34.2, 48, "DVP")
     arrow(65.8, 48, 76.2, 48, "UART")
@@ -69,7 +69,7 @@ def stand_scheme(path="fig_stand.png"):
     # нижний ряд — приёмник (наземный пункт, модуль в режиме станции)
     box(77, 2, 22, 20, "Модуль\nTX-AH-R900P", "\n\nстанция (STA)", accent=True)
     box(35, 2, 30, 20, "ESP32-S3 приёмника", "пересылка фрагментов,\nквитанция на\nкаждый видеокадр")
-    box(1, 2, 22, 20, "ПК", "halow_viewer.py:\nсборка, показ\nв браузере, CSV")
+    box(1, 2, 22, 20, "ПК", "halow_viewer.py:\nсборка, восста-\nновление FEC,\nпоказ, CSV")
     arrow(76.2, 12, 65.8, 12, "UART")
     ax.text(71, 10.2, "3 Мбод", ha="center", va="top", fontsize=8.5, color=INK2)
     arrow(34.2, 12, 23.8, 12, "USB")
@@ -144,17 +144,21 @@ def path_loss(path="fig_pathloss.png"):
 # Группа 0 — лабораторный этап: помещение до 5 м, 240×176, канал 4 МГц на 866 МГц, скорость на приёмнике.
 # Группа 1 — трасса 5 м, канал 2 МГц на 867 МГц; мера скорости указана в подписи.
 STAGES = [
-    ("01.09  230 400 бод, полоса приёма 8 → 4 МГц", 121, 0),
-    ("03.09  384 000 бод, пауза 8 мс", 184, 0),
-    ("23.09  без отладочного фильтра", 222, 0),
-    ("24.09  460 800 бод", 235, 0),
-    ("24.09  1 Мбод, кольцо модуля 8 КБ", 368, 0),
-    ("25.09  3 Мбод, чтение FIFO в модуле", 523, 0),
-    ("25.09  пауза 3 мс, опрос приёма раз в кадр", 708, 0),
-    ("29.09  320×240, RTS/CTS заводской (подача)", 282, 1),
-    ("29.09  320×240, RTS/CTS выключен (подача)", 618, 1),
-    ("06.10  480×320, esp_new_jpeg, ток ×1 (приёмник)", 906, 1),
-    ("08.10  итог: граница MCS, FEC и досылка (полезная)", 1063, 1),
+    ("230 400 бод, полоса приёма 8 → 4 МГц", 121, 0),
+    ("384 000 бод, пауза 8 мс", 184, 0),
+    ("без отладочного фильтра", 222, 0),
+    ("460 800 бод", 235, 0),
+    ("1 Мбод, кольцо модуля 8 КБ", 368, 0),
+    ("3 Мбод, чтение FIFO в модуле", 523, 0),
+    ("пауза 3 мс, опрос приёма раз в кадр", 708, 0),
+    ("320×240, RTS/CTS заводской (подача)", 282, 1),
+    ("320×240, RTS/CTS выключен (подача)", 618, 1),
+    ("480×320, esp_new_jpeg (приёмник)", 906, 1),
+    ("итог: граница MCS, FEC и досылка (полезная)", 1063, 1),
+    # граница связи итоговой версии (журнал range_eq_halow_20261016_1702, средняя полезная)
+    ("≈ 55 м (потери 66 дБ)", 944, 2),
+    ("≈ 310 м (81 дБ), потери видеокадров 9 %", 91, 2),
+    ("≈ 1,1 км (92 дБ): видео прекращается", 17, 2),
 ]
 
 
@@ -171,17 +175,20 @@ def throughput_steps(path="fig_throughput.png"):
         ys.append(y)
         labels.append(lab)
         vals.append(v)
-        cols.append(BLUE if g == 0 else AQUA)
+        cols.append((BLUE, AQUA, ORANGE)[g])
         y += 1
-    fig, ax = plt.subplots(figsize=(6.5, 4.6))
+    fig, ax = plt.subplots(figsize=(6.5, 5.4))
     ax.barh(ys, vals, height=0.62, color=cols)
     ax.set_yticks(ys)
     ax.set_yticklabels(labels, fontsize=9.5)
     for yy, v in zip(ys, vals):
         ax.text(v + 10, yy, f"{v}", va="center", fontsize=10, color=INK)
+    n2 = sum(1 for s_ in STAGES if s_[2] == 2)
     n5 = sum(1 for s_ in STAGES if s_[2] == 1)
-    ax.text(1180, ys[n5 - 1] + 0.55, "5 м, 867 МГц, канал 2 МГц", ha="right", va="bottom",
-            fontsize=9, color=AQUA, weight="bold")
+    ax.text(1180, ys[n2 - 1] + 0.55, "трасса прямой видимости, итоговая версия, 14 дБм",
+            ha="right", va="bottom", fontsize=9, color=ORANGE, weight="bold")
+    ax.text(1180, ys[n2 + n5 - 1] + 0.55, "5 м через стену, 867 МГц, канал 2 МГц", ha="right",
+            va="bottom", fontsize=9, color=AQUA, weight="bold")
     ax.text(1180, ys[-1] + 0.55, "помещение, до 5 м, 240×176, 866 МГц, канал 4 МГц", ha="right",
             va="bottom", fontsize=9, color=BLUE, weight="bold")
     ax.set_xlim(0, 1200)
@@ -236,7 +243,7 @@ def rate_vs_range(path="fig_rate_range.png"):
     pub_x, pub_y = [0.3, 0.6, 1.2], [15.0, 5.1, 5.3]
     ax.errorbar(pub_x, pub_y, yerr=[[0, 0, 1.3], [0, 0, 1.3]], fmt="o", ms=7, mfc="white", mec=BLUE,
                 mew=1.5, ecolor=BLUE, elinewidth=1, capsize=3, zorder=4,
-                label="Wi-Fi HaLow: данные производителя\n(+20 дБм, полоса не указана)")
+                label="Wi-Fi HaLow, измерения производителя модуля\n(мост и вода, 890–906 МГц; +20 дБм —\nна 6 дБ выше нормы РФ; канал не указан,\nпо скорости — не уже 4 МГц)")
     ax.axhline(VIDEO_MBPS, color=INK2, lw=1, ls="--", zorder=1)
     ax.text(0.031, VIDEO_MBPS * 1.12, "видеопоток стенда 1063 кбит/с", fontsize=9, color=INK2)
     ax.set_xscale("log")
@@ -326,6 +333,97 @@ def wall_loss(path="fig_wall.png"):
     plt.close(fig)
 
 
+# ------------------------------------------------------------ 20.10: новые рисунки по ревью
+# Скорость физического уровня IEEE 802.11ah, один поток, длинный защитный интервал, Мбит/с
+# (MCS 9 в канале 2 МГц и MCS 10 вне канала 1 МГц стандартом не определены).
+MCS_RATES = {
+    1: [0.3, 0.6, 0.9, 1.2, 1.8, 2.4, 2.7, 3.0, 3.6, 4.0],
+    2: [0.65, 1.3, 1.95, 2.6, 3.9, 5.2, 5.85, 6.5, 7.8, None],
+    4: [1.35, 2.7, 4.05, 5.4, 8.1, 10.8, 12.15, 13.5, 16.2, 18.0],
+    8: [2.925, 5.85, 8.775, 11.7, 17.55, 23.4, 26.325, 29.25, 35.1, 39.0],
+    16: [5.85, 11.7, 17.55, 23.4, 35.1, 46.8, 52.65, 58.5, 70.2, 78.0],
+}
+
+
+def mcs_channels(path="fig_mcs_channels.png"):
+    fig, ax = plt.subplots(figsize=(6.5, 3.8))
+    cols = {1: BLUE, 2: "#1c5cab", 4: "#9a9890", 8: "#b9b7af", 16: "#d3d1ca"}
+    for bw, rates in MCS_RATES.items():
+        xs = [i for i, r in enumerate(rates) if r is not None]
+        ys = [r for r in rates if r is not None]
+        allowed = bw <= 2
+        ax.plot(xs, ys, color=cols[bw], lw=2.2 if allowed else 1.4, marker="o" if allowed else ".",
+                ms=6 if allowed else 5, label=f"{bw} МГц" + (" — разрешён в РФ" if allowed else ""),
+                zorder=3 if allowed else 2)
+    ax.axhline(1.063, color=INK2, lw=1, ls="--")
+    ax.text(9.2, 1.18, "видеопоток стенда 1063 кбит/с", fontsize=8.5, color=INK2, ha="right")
+    ax.set_yscale("log")
+    ax.set_xticks(range(10))
+    ax.set_xlabel("Схема модуляции и кодирования (MCS)")
+    ax.set_ylabel("Скорость физического уровня, Мбит/с")
+    ax.grid(True, which="major", color=GRID, lw=0.6)
+    ax.set_axisbelow(True)
+    ax.legend(fontsize=8.5, frameon=False, loc="upper left", title="Ширина канала",
+              title_fontsize=8.5)
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)
+
+
+# Опыт «инерция выключена / включена», четыре этапа по 75 с в одном включении (журнал
+# docs/halow_link_debug.md, 07.10, 22:00–22:34)
+INERTIA = [("выкл", 597, 709, 3.4), ("вкл", 848, 343, 0.9), ("выкл", 414, 880, 16.5),
+           ("вкл", 514, 349, 3.8)]
+
+
+def inertia_ab(path="fig_inertia.png"):
+    fig, axes = plt.subplots(1, 3, figsize=(6.5, 2.8))
+    titles = ["Полезная скорость, кбит/с", "Задержка (медиана), мс", "Потеряно видеокадров, %"]
+    xs = range(len(INERTIA))
+    labels = [f"{i + 1}. {st}" for i, (st, *_) in enumerate(INERTIA)]
+    for k, ax in enumerate(axes):
+        vals = [row[k + 1] for row in INERTIA]
+        cols = [BLUE if row[0] == "вкл" else "#b9b7af" for row in INERTIA]
+        ax.bar(xs, vals, color=cols, width=0.65)
+        for x, v in zip(xs, vals):
+            ax.text(x, v, f"{v:g}".replace(".", ","), ha="center", va="bottom", fontsize=8.5)
+        ax.set_title(titles[k], fontsize=9)
+        ax.set_xticks(list(xs))
+        ax.set_xticklabels(labels, fontsize=8, rotation=0)
+        ax.set_ylim(0, max(vals) * 1.22)
+        ax.tick_params(axis="y", labelsize=8)
+        ax.grid(True, axis="y", color=GRID, lw=0.6)
+        ax.set_axisbelow(True)
+    fig.tight_layout()
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)
+
+
+def foliage_loss(d_m, f_ghz):
+    """Модель Вайсбергера (затухание в лесу), d — длина участка трассы через лес, м."""
+    if d_m <= 14:
+        return 0.45 * f_ghz ** 0.284 * d_m
+    return 1.33 * f_ghz ** 0.284 * d_m ** 0.588
+
+
+def foliage(path="fig_foliage.png"):
+    fig, ax = plt.subplots(figsize=(6.0, 3.4))
+    ds = [x for x in range(1, 401)]
+    for lab, f, col in (("Wi-Fi HaLow, 0,867 ГГц", 0.867, BLUE), ("Wi-Fi, 2,44 ГГц", 2.44, ORANGE),
+                        ("Wi-Fi, 5,5 ГГц", 5.5, "#eda100")):
+        ys = [foliage_loss(d, f) for d in ds]
+        ax.plot(ds, ys, color=col, lw=2, label=lab)
+        ax.text(402, ys[-1], f"{ys[-1]:.0f} дБ".replace(".", ","), va="center", fontsize=8.5,
+                color=col)
+    ax.set_xlim(0, 440)
+    ax.set_xlabel("Длина участка трассы, проходящего через лес, м")
+    ax.set_ylabel("Затухание, дБ")
+    ax.grid(True, color=GRID, lw=0.6)
+    ax.set_axisbelow(True)
+    ax.legend(fontsize=8.5, frameon=False, loc="upper left")
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     stand_scheme()
     path_loss()
@@ -334,3 +432,6 @@ if __name__ == "__main__":
     rate_vs_range()
     rate_heatmap()
     wall_loss()
+    mcs_channels()
+    inertia_ab()
+    foliage()

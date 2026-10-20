@@ -25,7 +25,7 @@ from docx.shared import Mm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CFG_FILE = os.path.normpath(os.path.join(HERE, "..", "vkr", "frame.json"))
-FONT = "GOST type B"
+FONT = "Arial"                          # 20.10: как у Ерофеевой (курсив Arial), а не GOST type B
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 FRAME_W_MM = 185                        # 210 − 20 − 5
 FRAME_H_MM = 287                        # 297 − 5 − 5
