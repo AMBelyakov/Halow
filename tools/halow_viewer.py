@@ -813,26 +813,27 @@ PAGE = """<!doctype html>
 <meta charset="utf-8">
 <title>T-Halow video</title>
 <style>
-  body { margin:0; background:#12151a; color:#e6e9ef;
+  /* 21.10: светлая тема — скриншот окна идёт в ВКР на белый лист */
+  body { margin:0; background:#ffffff; color:#1f2328;
          font-family:system-ui,Segoe UI,Roboto,sans-serif; }
   .wrap { display:flex; flex-wrap:wrap; gap:20px; padding:20px; }
-  .video { background:#000; border:1px solid #2a2f3a; border-radius:8px; padding:8px; }
+  .video { background:#f3f4f6; border:1px solid #d0d7de; border-radius:8px; padding:8px; }
   .video img { display:block; width:480px; max-width:90vw; image-rendering:pixelated; }
   .panel { min-width:260px; }
   h1 { font-size:18px; margin:0 0 14px; font-weight:600; }
   table { border-collapse:collapse; width:100%; font-size:14px; }
-  td { padding:7px 10px; border-bottom:1px solid #232833; }
-  td:first-child { color:#8b93a3; }
+  td { padding:7px 10px; border-bottom:1px solid #d8dee4; }
+  td:first-child { color:#57606a; }
   td:last-child { text-align:right; font-variant-numeric:tabular-nums; }
   .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; }
-  .up { background:#3ddc84; } .down { background:#e0505a; }
-  .hint { margin-top:14px; font-size:12px; color:#6b7280; line-height:1.5; }
+  .up { background:#1a7f37; } .down { background:#cf222e; }
+  .hint { margin-top:14px; font-size:12px; color:#6e7781; line-height:1.5; }
   .board { flex:1 1 100%; min-width:0; }
   .board h1 { margin-top:4px; }
   .board table { max-width:520px; margin-bottom:12px; }
-  pre#airlog { margin:0; background:#0b0d11; border:1px solid #2a2f3a; border-radius:8px;
+  pre#airlog { margin:0; background:#f6f8fa; border:1px solid #d0d7de; border-radius:8px;
                padding:10px 12px; height:320px; overflow:auto; font-size:12px; line-height:1.45;
-               color:#c9d1d9; white-space:pre-wrap; word-break:break-word; }
+               color:#1f2328; white-space:pre-wrap; word-break:break-word; }
 </style>
 </head>
 <body>
