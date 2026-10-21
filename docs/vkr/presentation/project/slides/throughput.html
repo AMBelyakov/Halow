@@ -1,16 +1,16 @@
 <section id="throughput" data-transition="fade" style="background:#F7F6F2; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
-<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Пропускная способность: 121 → 1063 кбит/с, ограничивает радиоканал</h2>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Пропускная способность: 121 → 1063 кбит/с</h2>
 <div style="display:flex; gap:40px; align-items:center">
 <div style="background:#FFFFFF; border:1px solid #E0DDD4; border-radius:16px; padding:16px">
-<img src="/_blob/0b32ccf6c49e1645d65c2883c180e594" alt="Рост пропускной способности по этапам: лабораторный этап около 0,7 Мбит/с, затем 5 м в канале 2 МГц до 1063 кбит/с полезного видео" style="width:1040px; height:440px; object-fit:contain">
+<img src="/_blob/c3c4abb3782d00c6e84a8c05edc82abd" alt="Рост пропускной способности по этапам: помещение до 5 м, канал 4 МГц — до 708 кбит/с; 5 м через стену, канал 2 МГц — до 1063 кбит/с полезного видео; трасса прямой видимости — 944 кбит/с на 55 м, 91 на 310 м, 17 на 1,1 км" style="width:1094px; height:652px; object-fit:contain">
 </div>
 <div style="flex:1; display:flex; flex-direction:column; gap:28px">
-<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:48px; font-weight:700; line-height:1.05; color:#14213D">6,5 Мбит/с</p><p style="font-size:24px; line-height:1.4; color:#4A5568">радиоканал 2 МГц, MCS 7 — по стандарту</p></div>
-<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:48px; font-weight:700; line-height:1.05; color:#14213D">3,92 Мбит/с</p><p style="font-size:24px; line-height:1.4; color:#4A5568">предел UART при 5 Мбод — архитектура платы</p></div>
-<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:48px; font-weight:700; line-height:1.05; color:#2A78D6">1,06 Мбит/с</p><p style="font-size:24px; line-height:1.4; color:#4A5568">достигнуто; ограничивают повторы в эфире</p></div>
+<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:40px; font-weight:700; line-height:1.05; color:#14213D">6,5 Мбит/с</p><p style="font-size:24px; line-height:1.4; color:#4A5568">радиоканал 2 МГц, MCS 7 — по стандарту</p></div>
+<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:40px; font-weight:700; line-height:1.05; color:#14213D">3,92 Мбит/с</p><p style="font-size:24px; line-height:1.4; color:#4A5568">предел UART при 5 Мбод — архитектура платы</p></div>
+<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:40px; font-weight:700; line-height:1.05; color:#2A78D6">1,06 Мбит/с</p><p style="font-size:24px; line-height:1.4; color:#4A5568">достигнуто на 5 м через стену; ограничивает радиоканал: повторы в эфире</p></div>
+<p style="font-size:24px; line-height:1.4; color:#4A5568">Эфир занят на 99 %, треть первых передач теряется даже при SNR 26–36 дБ</p>
 </div>
 </div>
-<p style="font-size:26px; line-height:1.4; color:#4A5568">Эфир занят на 99 %, треть первых передач теряется даже при SNR 26–36 дБ; процессор модуля простаивает 92–93 %.</p>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 9 / 17</p>
-<aside>Исходно платформа давала 121 кбит/с. На лабораторном этапе узкие места были внутри платы: драйвер UART модуля терял 89,5 % байтов, мешали паузы между фрагментами и опрос приёма. Дальше — законный канал и 5 метров: выключение RTS/CTS удвоило поток, двухъядерный кодер открыл 480 на 320, доработки канала дали 1063 кбит/с полезного видео. Справа три числа: радиоканал 2 МГц способен на 6,5 Мбит/с, UART пропустит не больше 3,92, достигнуто 1,06. Ограничивает уже не плата, а радиоканал: эфир занят на 99 процентов, около трети первых передач не доходит даже при сильном сигнале.</aside>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 10 / 16</p>
+<aside>Исходно платформа давала 121 кбит/с. Синие столбцы — помещение: узкие места были внутри платы, драйвер UART модуля терял 89,5 % байтов, мешали паузы между фрагментами и опрос приёма. Зелёные — разрешённый канал 2 МГц и 5 метров через стену: выключение RTS/CTS удвоило поток, двухъядерный кодер открыл 480 на 320, доработки канала дали 1063 кбит/с полезного видео. Оранжевые — итоговая версия на трассе прямой видимости: 944 кбит/с на 55 метрах, 91 на 310 и 17 на 1,1 километра, где видео прекращается. Справа три числа: радиоканал 2 МГц способен на 6,5 Мбит/с, UART пропустит не больше 3,92, достигнуто 1,06. Ограничивает уже не плата, а радиоканал: эфир занят на 99 процентов, около трети первых передач не доходит даже при сильном сигнале.</aside>
 </section>

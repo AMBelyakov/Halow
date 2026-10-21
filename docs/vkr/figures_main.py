@@ -142,7 +142,7 @@ def path_loss(path="fig_pathloss.png"):
 # ------------------------------------------------------------ рисунок 3.1
 # (подпись, кбит/с, группа) — из журнала испытаний docs/halow_link_debug.md и README релиза.
 # Группа 0 — лабораторный этап: помещение до 5 м, 240×176, канал 4 МГц на 866 МГц, скорость на приёмнике.
-# Группа 1 — трасса 5 м, канал 2 МГц на 867 МГц; мера скорости указана в подписи.
+# Группа 1 — трасса 5 м через стену, канал 2 МГц на 867 МГц; мера скорости указана в подписи.
 STAGES = [
     ("230 400 бод, полоса приёма 8 → 4 МГц", 121, 0),
     ("384 000 бод, пауза 8 мс", 184, 0),
@@ -292,7 +292,7 @@ def rate_heatmap(path="fig_rate_heatmap.png"):
                 ax.add_patch(plt.Rectangle((j, i), 1, 1, fc=fc, ec="white", lw=2))
                 dark = r is not None and norm(r) > 0.55
                 ax.text(j + 0.5, i + 0.5, fmt_rate(r), ha="center", va="center", fontsize=8.5,
-                        color="white" if dark else INK, weight="bold" if r and r >= VIDEO_MBPS else None)
+                        color="white" if dark else INK)   # 21.10: без порога «хватает на видео»
         ax.set_xlim(0, len(DISTS_KM))
         ax.set_ylim(len(TECH), 0)
         ax.set_yticks([i + 0.5 for i in range(len(TECH))])
@@ -304,9 +304,9 @@ def rate_heatmap(path="fig_rate_heatmap.png"):
     axes[-1].set_xticks([j + 0.5 for j in range(len(DISTS_KM))])
     axes[-1].set_xticklabels([f"{d:g}".replace(".", ",") for d in DISTS_KM])
     axes[-1].set_xlabel("Расстояние, км")
-    fig.text(0.01, -0.01, "В ячейке — наибольшая скорость физического уровня, бит/с (к — кбит/с, М — Мбит/с), "
-             "при которой связь сохраняется с запасом 10 дБ;\nжирным — скорость не ниже видеопотока "
-             "стенда (1063 кбит/с); «—» — связи нет. Расчёт автора по паспортным данным.",
+    fig.text(0.01, -0.01, "В ячейке — наибольшая скорость физического уровня (к — кбит/с, "
+             "М — Мбит/с), на которой связь на этом расстоянии сохраняется с запасом 10 дБ;\n"
+             "«—» — связи нет ни на одном режиме. Расчёт автора по паспортным данным.",
              fontsize=8, color=INK2, va="top")
     fig.tight_layout()
     fig.savefig(path, bbox_inches="tight")

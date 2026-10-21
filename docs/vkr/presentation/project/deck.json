@@ -12,13 +12,12 @@
   "goal",
   "niche",
   "theory",
+  "field",
   "whyexp",
   "stand",
   "program",
   "throughput",
   "release",
-  "capture",
-  "field",
   "range",
   "integration",
   "econ",
@@ -31,7 +30,7 @@
    "start": "cover"
   },
   "analysis": {
-   "description": "Сравнительный анализ протоколов связи с БПЛА",
+   "description": "Сравнительный анализ протоколов связи с БПЛА: сравнение, теория, расчётная дальность",
    "start": "niche"
   },
   "method": {
@@ -39,12 +38,12 @@
    "start": "whyexp"
   },
   "results": {
-   "description": "Результаты практической части: скорость, ограничивающее звено, итоговые результаты, наводка",
+   "description": "Результаты практической части: стол, 5 м через стену, граница связи",
    "start": "throughput"
   },
   "finish": {
-   "description": "Дальность: расчёт и измерение границы связи, предложения для БПЛА, экономика, охрана труда и выводы",
-   "start": "field"
+   "description": "Предложения для БПЛА, экономика, охрана труда и выводы",
+   "start": "integration"
   }
  },
  "faces": {
