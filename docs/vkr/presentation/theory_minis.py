@@ -47,6 +47,31 @@ def plain_log(ax, ticks, fmt):
     ax.minorticks_off()
 
 
+def proj(ax, x, ys, cols, label, gap, lx=None):
+    """22.10: проекции точек кривых на ось потерь — значения стоят делениями на самой оси,
+    разница подписана между пунктирами; соседние штатные деления ближе gap убираются."""
+    x0, yl = ax.get_xlim()[0], ax.get_ylim()
+    for y, c in zip(ys, cols):
+        ax.hlines(y, x0, x, colors=c, linestyles="--", lw=1.4)
+        ax.plot([x], [y], "o", color=c, ms=6, zorder=5)
+    base = [t for t in ax.get_yticks() if yl[0] <= t <= yl[1] and all(abs(t - y) >= gap for y in ys)]
+    ticks = sorted(base + list(ys))
+    ax.set_yticks(ticks)
+    ax.set_yticklabels([f"{t:.1f}".replace(".", ",") if t in ys else f"{t:g}" for t in ticks])
+    for tl, t in zip(ax.get_yticklabels(), ticks):
+        if t in ys:
+            tl.set_color(cols[list(ys).index(t)])
+            tl.set_fontweight("bold")
+            tl.set_fontsize(17)
+    if lx is None:
+        ax.text(0.03, sum(ys) / 2, label, color=INK, fontsize=16, weight="bold", ha="left", va="center",
+                transform=ax.get_yaxis_transform())
+    else:
+        ax.text(lx, sum(ys) / 2, label, color=INK, fontsize=16, weight="bold", ha="left", va="center")
+    ax.set_xlim(left=x0)
+    ax.set_ylim(yl)
+
+
 def save(fig, name):
     fig.savefig(os.path.join(HERE, name), bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -60,12 +85,11 @@ ax.plot([d / 1000 for d in ds], [fspl(d, F_H) for d in ds], color=BLUE, lw=2.5)
 ax.set_xscale("log")
 ax.set_xlabel("Расстояние, км")
 ax.set_ylabel("Потери, дБ")
-ax.text(0.12, fspl(120, F_W) + 13, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold")
-ax.text(2.6, fspl(2600, F_H) - 9, "868 МГц", color=BLUE, fontsize=19, weight="bold")
+ax.text(1.6, 118, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold", ha="right")
+ax.text(3.2, fspl(3200, F_H) - 11, "868 МГц", color=BLUE, fontsize=19, weight="bold")
 plain_log(ax, [0.1, 0.3, 1, 3, 10], lambda t: f"{t:g}".replace(".", ","))
-ax.annotate("", xy=(1, fspl(1000, F_H)), xytext=(1, fspl(1000, F_W)),
-            arrowprops=dict(arrowstyle="<->", color=INK, lw=1.5))
-ax.text(1.0, 86, "9 дБ", ha="center", va="top", fontsize=18, weight="bold", color=INK)
+ax.set_xlim(0.09, 11)
+proj(ax, 1, (fspl(1000, F_W), fspl(1000, F_H)), (ORANGE, BLUE), "9 дБ", 6)
 save(fig, "theory_fs.png")
 
 # 2. лес: длина участка
@@ -76,11 +100,10 @@ ax.plot(ls, [wei(d, 0.867) for d in ls], color=BLUE, lw=2.5)
 ax.set_xlabel("Длина участка леса, м")
 ax.set_ylabel("Потери в лесу, дБ")
 ax.text(200, wei(250, 2.44) + 8, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold")
-ax.text(250, wei(250, 0.867) - 9, "868 МГц", color=BLUE, fontsize=19, weight="bold")
-ax.annotate("", xy=(100, wei(100, 0.867)), xytext=(100, wei(100, 2.44)),
-            arrowprops=dict(arrowstyle="<->", color=INK, lw=1.5))
-ax.text(112, (wei(100, 0.867) + wei(100, 2.44)) / 2 - 7, f"{wei(100, 2.44) - wei(100, 0.867):.1f} дБ на 100 м".replace(".", ","),
-        ha="left", va="top", fontsize=19, weight="bold", color=INK)
+ax.text(280, 28, "868 МГц", color=BLUE, fontsize=19, weight="bold")
+ax.set_xlim(0, 410)
+proj(ax, 100, (wei(100, 2.44), wei(100, 0.867)), (ORANGE, BLUE),
+     f"{wei(100, 2.44) - wei(100, 0.867):.1f} дБ".replace(".", ","), 5, lx=112)
 save(fig, "theory_fol.png")
 
 # 3. двухлучевая: антенны у земли и на борту
@@ -102,5 +125,8 @@ ax.text(70, 43, "антенна на борту, 50 м", color=BLUE, fontsize=16
 ax.text(1250, 74, "свободное\nпространство", color=GREY, fontsize=15)
 plain_log(ax, [10, 30, 100, 300, 1000, 3000], lambda t: f"{t:g}")
 ax.set_ylim(40, 135)
+ax.set_xlim(8, 6000)
+_g, _a = two_ray(1000, 1.5, 1.5), two_ray(1000, 1.5, 50)
+proj(ax, 1000, (_g, _a), (ORANGE, BLUE), f"{_g - _a:.0f} дБ", 8)
 save(fig, "theory_2ray.png")
 print("ok")
