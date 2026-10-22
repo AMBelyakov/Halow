@@ -158,4 +158,13 @@ SOURCES = {
                "Текст : электронный.",
     "elrs": "ExpressLRS : open source radio link for RC applications. – Текст : электронный // "
             "ExpressLRS : [сайт]. – URL: https://www.expresslrs.org (дата обращения: 27.09.2026).",
+    "tr38901spec": "3GPP TR 38.901 V17.0.0 (2022-03). Study on channel model for frequencies from 0.5 "
+                   "to 100 GHz (Release 17) : technical report / 3rd Generation Partnership Project. – "
+                   "Valbonne : ETSI, 2022. – 106 p. – Текст : электронный // 3GPP : [сайт]. – URL: "
+                   "https://www.3gpp.org/ftp/Specs/archive/38_series/38.901/ (дата обращения: 22.10.2026).",
+    "fpivp": "Об утверждении Федеральных правил использования воздушного пространства Российской "
+             "Федерации : постановление Правительства Российской Федерации от 11.03.2010 № 138 (в ред. "
+             "постановления от 03.02.2020 № 74). – Текст : электронный // ГАРАНТ.РУ : "
+             "информационно-правовой портал. – URL: https://base.garant.ru/197839/ (дата обращения: "
+             "22.10.2026).",
 }

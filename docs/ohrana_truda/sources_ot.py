@@ -149,4 +149,25 @@ SOURCES = {
                "https://meganorm.ru/mega_doc/norm/gost_gosudarstvennyj-standart/1/"
                "gost_12_1_019-2017_mezhgosudarstvennyy_standart_sistema.html (дата обращения: "
                "15.10.2026).",
+    "sp1": "СП 1.13130.2020. Системы противопожарной защиты. Эвакуационные пути и выходы : свод "
+           "правил : утвержден приказом МЧС России от 19.03.2020 № 194 : дата введения 2020-09-19. – "
+           "Текст : электронный // Электронный фонд правовых и нормативно-технических документов : "
+           "[сайт]. – URL: https://docs.cntd.ru/document/565248961 (дата обращения: 22.10.2026).",
+    "hp400": "HP Pro Series 400 G9 Desktop PCs : QuickSpecs c08017709 : Version 18, May 8, 2025 / HP "
+             "Inc. – 99 p. – Текст : электронный // HP : [сайт]. – URL: "
+             "https://h20195.www2.hp.com/v2/GetDocument.aspx?docname=c08017709 (дата обращения: "
+             "22.10.2026).",
+    "daichi": "Сплит-системы Daichi AIR : AIR20AVQ1 / AIR20FV1 – AIR70AVQ1 / AIR70FV1 : технические "
+              "характеристики. – Текст : электронный // Библиотека С.О.К. : [сайт]. – URL: "
+              "https://c-o-k.ru/library/instructions/daichi/kondicionery-bytovye/133972.pdf (дата "
+              "обращения: 22.10.2026).",
+    "cactus": "Шредер Cactus CS-SH-G6 : характеристики. – Текст : электронный // КНС : [сайт]. – URL: "
+              "https://www.kns.ru/product/shreder-cactus-cs-sh-g6/characteristics/ (дата обращения: "
+              "22.10.2026).",
+    # та же запись, что в docs/vkr/sources_main.py: ключ общий, номер в списке ВКР один
+    "txspec": "泰芯 802.11ah TX-AH-Rx00P 系列模组技术规格书 [Технические характеристики модулей серии "
+              "TX-AH-Rx00P] : версия V6.2 от 16.11.2023 / Zhuhai Taixin Semiconductor Co., Ltd. – "
+              "Текст : электронный // GitHub : репозиторий Xinyuan-LilyGO/T-Halow. – URL: "
+              "https://github.com/Xinyuan-LilyGO/T-Halow/tree/master/hardware/TX_AH (дата обращения: "
+              "08.10.2026).",
 }
