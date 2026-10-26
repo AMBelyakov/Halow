@@ -249,15 +249,30 @@ ax.add_patch(Rectangle((0, 0), DWm, DDm, facecolor="none", edgecolor="black", li
 # монитор, клавиатура, мышь, документы
 ax.add_patch(Rectangle((DWm / 2 - 270, 520), 540, 40, facecolor="black", zorder=4))
 ax.add_patch(Rectangle((DWm / 2 - 220, 80), 440, 150, facecolor="white", edgecolor="black", linewidth=0.8, zorder=4))
-ax.add_patch(Rectangle((DWm / 2 + 300, 110), 60, 100, facecolor="white", edgecolor="black", linewidth=0.8, zorder=4))
+ax.add_patch(Rectangle((DWm / 2 + 280, 110), 60, 100, facecolor="white", edgecolor="black", linewidth=0.8, zorder=4))
 ax.add_patch(Rectangle((140, 120), 230, 300, facecolor="white", edgecolor="black", linewidth=0.6,
                        linestyle="--", zorder=4))
 ax.add_patch(Rectangle((DWm / 2 - 130, -480), 260, 300, facecolor="white", edgecolor="black", linewidth=0.8, zorder=2))
 callout(ax, (DWm / 2 + 200, 540), 1, (DWm / 2 + 420, 640), rr=38)
 callout(ax, (DWm / 2 - 100, 155), 2, (DWm / 2 - 120, 330), rr=38)
-callout(ax, (DWm / 2 + 330, 160), 3, (DWm / 2 + 470, 330), rr=38)
+callout(ax, (DWm / 2 + 310, 160), 3, (DWm / 2 + 400, 330), rr=38)
 callout(ax, (255, 330), 4, (230, 600), rr=38)
 callout(ax, (DWm / 2 + 130, -330), 5, (DWm / 2 + 300, -380), rr=38)
+# 23.10 (пользователь: «а платы-то где?»): платы стенда в дальнем углу стола, за зоной В,
+# не ближе RF_R от оператора; штрихи — антенны
+BX, BW, BH = DWm - 125, 110, 45
+for by in (470, 575):
+    ax.add_patch(Rectangle((BX, by), BW, BH, facecolor="white", edgecolor="black", linewidth=0.8, zorder=4))
+    ax.plot([BX + BW - 12, BX + BW - 12], [by + BH, by + BH + 55], color="black", linewidth=1.2, zorder=4)
+callout(ax, (BX + 60, 480), 6, (BX + 60, 340), rr=38)
+sh = shoulders[1]
+near = (BX, 470)
+dist = math.hypot(near[0] - sh[0], near[1] - sh[1])
+assert dist >= C.RF_R * 1000, dist
+ax.plot([sh[0], near[0]], [sh[1], near[1]], color="black", linewidth=0.6, linestyle="--", zorder=5)
+ax.text((sh[0] + near[0]) / 2 + 30, (sh[1] + near[1]) / 2, f"{round(dist, -1):.0f}", fontsize=8.5,
+        rotation=math.degrees(math.atan2(near[1] - sh[1], near[0] - sh[0])), ha="left", va="center",
+        zorder=6, bbox=dict(facecolor="white", edgecolor="none", pad=0.5))
 for rad, lab in ((350, "А"), (500, "Б"), (650, "В")):
     sx, sy = shoulders[0]
     ax.text(sx + (rad - 55) * math.cos(math.radians(152)), sy + (rad - 55) * math.sin(math.radians(152)), lab,
