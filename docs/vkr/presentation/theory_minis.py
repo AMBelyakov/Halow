@@ -92,29 +92,22 @@ ax.set_xlim(0.09, 11)
 proj(ax, 1, (fspl(1000, F_W), fspl(1000, F_H)), (ORANGE, BLUE), "9 дБ", 6)
 save(fig, "theory_fs.png")
 
-# 2. лес (26.10, пользователь: «сравнение затухания на 1 км»): трасса 1 км, часть которой — лес;
-# потери = свободное пространство на 1 км + добавка Вайсбергера за участок леса
-def wei_any(d, g):
-    return 0.45 * g ** 0.284 * d if d <= 14 else wei(d, g)
-
-
+# 2. лес (27.10, пользователь: «проекцию на 1 км, а не упоминание в тексте»): потери на трассе с участком
+# леса 100 м от длины трассы — свободное пространство + добавка Вайсбергера; проекции на ось потерь на 1 км
 fig, ax = _ax()
-ls = list(range(0, 401, 2))
-L1W, L1H = fspl(1000, F_W), fspl(1000, F_H)
-ax.plot(ls, [L1W + wei_any(d, 2.44) for d in ls], color=ORANGE, lw=2.5)
-ax.plot(ls, [L1H + wei_any(d, 0.867) for d in ls], color=BLUE, lw=2.5)
-ax.set_xlabel("Из них лес, м")
-ax.set_ylabel("Потери на 1 км, дБ")
-ax.text(225, 151, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold", ha="right")
-ax.text(400, 123, "868 МГц", color=BLUE, fontsize=19, weight="bold", ha="right", va="top")
-ax.set_xlim(0, 410)
-ax.set_ylim(85, 162)
-_w, _h = L1W + wei(100, 2.44), L1H + wei(100, 0.867)
-proj(ax, 100, (_w, _h), (ORANGE, BLUE), "", 4)
-ax.annotate("", xy=(100, _h + 0.6), xytext=(100, _w - 0.6),
-            arrowprops=dict(arrowstyle="<->", color=INK, lw=1.4))
-ax.text(105, (_w + _h) / 2 + 4.5, f"{_w - _h:.1f} дБ".replace(".", ","), color=INK, fontsize=15,
-        weight="bold", ha="left", va="center")
+ds = [100 * 10 ** (i / 50) for i in range(0, 101)]          # 0,1–10 км
+FW, FH = wei(100, 2.44), wei(100, 0.867)
+ax.plot([d / 1000 for d in ds], [fspl(d, F_W) + FW for d in ds], color=ORANGE, lw=2.5)
+ax.plot([d / 1000 for d in ds], [fspl(d, F_H) + FH for d in ds], color=BLUE, lw=2.5)
+ax.set_xscale("log")
+ax.set_xlabel("Расстояние, км")
+ax.set_ylabel("Потери, дБ")
+ax.text(0.65, 136, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold", ha="right")
+ax.text(3.2, fspl(3200, F_H) + FH - 11, "868 МГц", color=BLUE, fontsize=19, weight="bold")
+plain_log(ax, [0.1, 0.3, 1, 3, 10], lambda t: f"{t:g}".replace(".", ","))
+ax.set_xlim(0.09, 11)
+_w, _h = fspl(1000, F_W) + FW, fspl(1000, F_H) + FH
+proj(ax, 1, (_w, _h), (ORANGE, BLUE), f"{_w - _h:.1f} дБ".replace(".", ","), 6)
 save(fig, "theory_fol.png")
 
 # 3. двухлучевая: антенны у земли и на борту
