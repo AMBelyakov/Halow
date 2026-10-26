@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """План трассы «5 м через стену» для слайда 11 в стиле карты (27.10, пользователь: «нарисуй как на картах
 рисуют»; 27.10, позже: «живу между 1 и 2 подъездом»). Двор из двух пятиэтажек и дорога — по спутниковому снимку пользователя, подъезды 1–4 — его
-нумерация; камера (AP) — в квартире между подъездами 1 и 2 у окна во двор, приёмник с ноутбуком (STA) — у угла соседнего
-дома (27.10, пользователь). Потери на трассе стенда — 67 дБ (приёмник 14 дБм, у камеры −53 дБм); столько же даёт
-путь ≈ 43 м через оконное стекло: 64,0 дБ свободного пространства + 2,2 дБ стекла (3GPP TR 38.901).
+нумерация; камера (AP) — в квартире между подъездами 1 и 2 у окна во двор, ноутбук + STA — за своим домом,
+с обратной стороны, вне кадра камеры (27.10, пользователь: «чтобы не было вопросов, где я на картинке»; у угла
+соседнего дома он попал бы в кадр). Потери на трассе стенда — 67 дБ (приёмник 14 дБм, у камеры −53 дБм); путь
+≈ 11 м через две бетонные стены 0,5 м — 52,3 дБ свободного пространства + 2 × 8,5 дБ (3GPP TR 38.901) ≈ 69 дБ.
+За соседним домом было бы ≈ 85 дБ — при этом, по опыту 16.10, видео почти стоит, и показатели слайда не годятся.
 Запуск: python map_stand.py -> map_stand.png рядом со скриптом.
 """
 import math
@@ -52,24 +54,26 @@ rect(ax, -24, -46, -14, -26, fc="#E6E3DC", ec=ROAD_EDGE, lw=1, z=2)  # стоя�
 
 rect(ax, -42, -50, -30, 34, fc=HOUSE, ec=HOUSE_EDGE, lw=1.6, z=3)   # соседний дом
 rect(ax, 8, -46, 20, 38, fc=HOUSE, ec=HOUSE_EDGE, lw=1.6, z=3)      # дом с камерой
+rect(ax, 13.75, -46, 14.25, 38, fc="#8C8476", z=4)                  # продольная несущая стена, бетон 0,5 м
 
 for k, y in enumerate((28, 8, -12, -32)):                           # подъезды 1–4 с запада, сверху вниз
     cx, cy = r(5.2, y)
     ax.add_patch(Circle((cx, cy), 2.9, fc="#5F6673", ec="white", lw=1.2, zorder=6))
     ax.text(cx, cy, str(k + 1), color="white", fontsize=13, weight="bold", ha="center", va="center", zorder=7)
 
-cam, me = r(9.6, 18), r(-28.5, 35.8)                                # окно квартиры -> угол соседнего дома, ≈ 43 м
+cam, me = r(9.6, 18), r(21.0, 18)                                   # квартира -> за домом: ≈ 11 м, две стены
 ax.plot([cam[0], me[0]], [cam[1], me[1]], color=INK, lw=2, ls=(0, (4, 3)), zorder=8)
 for (x, y), c in ((cam, BLUE), (me, ORANGE)):
     ax.add_patch(Circle((x, y), 2.0, fc=c, ec="white", lw=1.5, zorder=9))
-ax.text(*r(24, 14), "камера (AP)\nв квартире", color=BLUE, fontsize=15.5, weight="bold",
-        ha="left", va="center", zorder=10, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.95))
-ax.plot([cam[0], r(23.5, 14)[0]], [cam[1], r(23.5, 14)[1]], color=BLUE, lw=1.2, zorder=8)
+ax.text(*r(-4, 22), "камера (AP)", color=BLUE, fontsize=15.5, weight="bold",   # 27.10: без «в квартире» и «я»
+        ha="right", va="center", zorder=10, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.95))
+ax.plot([cam[0], r(-3.5, 22)[0]], [cam[1], r(-3.5, 22)[1]], color=BLUE, lw=1.2, zorder=8)
 mx, my = me
-ax.text(mx - 3, my - 1, "я: ноутбук\n+ плата (STA)", color=ORANGE, fontsize=15.5, weight="bold",
-        ha="right", va="top", zorder=10, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.95))
-lx, ly = (cam[0] + me[0]) / 2, (cam[1] + me[1]) / 2
-ax.text(lx - 10, ly - 3, "≈ 43 м через окно\n≈ 66 дБ", color=INK, fontsize=15, weight="bold", ha="center", va="top",
+ax.plot([mx, r(27, 26)[0]], [my, r(27, 26)[1]], color=ORANGE, lw=1.2, zorder=8)
+ax.text(*r(27.5, 26), "ноутбук\n+ STA", color=ORANGE, fontsize=15.5, weight="bold",
+        ha="left", va="center", zorder=10, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.95))
+lx, ly = r(25, 8)
+ax.text(lx, ly, "≈ 11 м,\nдве стены,\n≈ 69 дБ", color=INK, fontsize=15, weight="bold", ha="left", va="center",
         zorder=10, bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.9))
 ax.text(*r(-36, -6), "соседний дом", color=GREY, fontsize=15, ha="center", va="center", rotation=72,
         rotation_mode="anchor", zorder=10)

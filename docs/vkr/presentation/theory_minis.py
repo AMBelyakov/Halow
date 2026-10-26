@@ -33,7 +33,9 @@ def two_ray(d, h1, h2, f=F_H):
 
 
 def _ax():
-    fig, ax = plt.subplots(figsize=(5.0, 4.0), dpi=150)
+    # 27.10: одинаковая область графика у всех трёх (без обрезки по содержимому) — иначе на слайде они разного размера
+    fig = plt.figure(figsize=(5.0, 4.0), dpi=150)
+    ax = fig.add_axes([0.2, 0.17, 0.76, 0.79])
     for sp in ("top", "right"):
         ax.spines[sp].set_visible(False)
     ax.grid(True, color=GRID, lw=0.8)
@@ -73,7 +75,7 @@ def proj(ax, x, ys, cols, label, gap, lx=None):
 
 
 def save(fig, name):
-    fig.savefig(os.path.join(HERE, name), bbox_inches="tight", facecolor="white")
+    fig.savefig(os.path.join(HERE, name), facecolor="white")
     plt.close(fig)
 
 
@@ -126,7 +128,7 @@ ax.text(b_g * 1.15, 128, f"{b_g:.0f} м", color=ORANGE, fontsize=17, weight="bol
 ax.text(b_50 / 1.12, 128, f"{b_50:.0f} м", color=BLUE, fontsize=17, weight="bold", ha="right")
 ax.text(31, 50, "у земли, 1,5 м", color=ORANGE, fontsize=15, weight="bold")
 ax.text(31, 43, "на борту, 50 м", color=BLUE, fontsize=15, weight="bold")
-ax.text(1150, 70, "свободное\nпространство", color=GREY, fontsize=14)
+ax.text(5500, 68, "свободное\nпространство", color=GREY, fontsize=14, ha="right", va="top")
 plain_log(ax, [10, 30, 100, 300, 1000, 3000], lambda t: f"{t:g}")
 ax.set_ylim(40, 135)
 ax.set_xlim(8, 6000)
