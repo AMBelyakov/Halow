@@ -92,18 +92,29 @@ ax.set_xlim(0.09, 11)
 proj(ax, 1, (fspl(1000, F_W), fspl(1000, F_H)), (ORANGE, BLUE), "9 дБ", 6)
 save(fig, "theory_fs.png")
 
-# 2. лес: длина участка
+# 2. лес (26.10, пользователь: «сравнение затухания на 1 км»): трасса 1 км, часть которой — лес;
+# потери = свободное пространство на 1 км + добавка Вайсбергера за участок леса
+def wei_any(d, g):
+    return 0.45 * g ** 0.284 * d if d <= 14 else wei(d, g)
+
+
 fig, ax = _ax()
-ls = list(range(14, 401, 2))
-ax.plot(ls, [wei(d, 2.44) for d in ls], color=ORANGE, lw=2.5)
-ax.plot(ls, [wei(d, 0.867) for d in ls], color=BLUE, lw=2.5)
-ax.set_xlabel("Длина участка леса, м")
-ax.set_ylabel("Потери в лесу, дБ")
-ax.text(200, wei(250, 2.44) + 8, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold")
-ax.text(280, 28, "868 МГц", color=BLUE, fontsize=19, weight="bold")
+ls = list(range(0, 401, 2))
+L1W, L1H = fspl(1000, F_W), fspl(1000, F_H)
+ax.plot(ls, [L1W + wei_any(d, 2.44) for d in ls], color=ORANGE, lw=2.5)
+ax.plot(ls, [L1H + wei_any(d, 0.867) for d in ls], color=BLUE, lw=2.5)
+ax.set_xlabel("Из них лес, м")
+ax.set_ylabel("Потери на 1 км, дБ")
+ax.text(225, 151, "2,4 ГГц", color=ORANGE, fontsize=19, weight="bold", ha="right")
+ax.text(400, 123, "868 МГц", color=BLUE, fontsize=19, weight="bold", ha="right", va="top")
 ax.set_xlim(0, 410)
-proj(ax, 100, (wei(100, 2.44), wei(100, 0.867)), (ORANGE, BLUE),
-     f"{wei(100, 2.44) - wei(100, 0.867):.1f} дБ".replace(".", ","), 5, lx=112)
+ax.set_ylim(85, 162)
+_w, _h = L1W + wei(100, 2.44), L1H + wei(100, 0.867)
+proj(ax, 100, (_w, _h), (ORANGE, BLUE), "", 4)
+ax.annotate("", xy=(100, _h + 0.6), xytext=(100, _w - 0.6),
+            arrowprops=dict(arrowstyle="<->", color=INK, lw=1.4))
+ax.text(105, (_w + _h) / 2 + 4.5, f"{_w - _h:.1f} дБ".replace(".", ","), color=INK, fontsize=15,
+        weight="bold", ha="left", va="center")
 save(fig, "theory_fol.png")
 
 # 3. двухлучевая: антенны у земли и на борту
@@ -118,11 +129,11 @@ for b, c in ((b_g, ORANGE), (b_50, BLUE)):
 ax.set_xscale("log")
 ax.set_xlabel("Расстояние, м")
 ax.set_ylabel("Потери, дБ")
-ax.text(b_g * 1.15, 128, f"{b_g:.0f} м", color=ORANGE, fontsize=19, weight="bold")
-ax.text(b_50 * 1.12, 63, f"{b_50:.0f} м", color=BLUE, fontsize=19, weight="bold")
-ax.text(70, 52, "антенны у земли, 1,5 м", color=ORANGE, fontsize=16)
-ax.text(70, 43, "антенна на борту, 50 м", color=BLUE, fontsize=16)
-ax.text(1250, 74, "свободное\nпространство", color=GREY, fontsize=15)
+ax.text(b_g * 1.15, 128, f"{b_g:.0f} м", color=ORANGE, fontsize=17, weight="bold")
+ax.text(b_50 / 1.12, 128, f"{b_50:.0f} м", color=BLUE, fontsize=17, weight="bold", ha="right")
+ax.text(31, 50, "у земли, 1,5 м", color=ORANGE, fontsize=15, weight="bold")
+ax.text(31, 43, "на борту, 50 м", color=BLUE, fontsize=15, weight="bold")
+ax.text(1150, 70, "свободное\nпространство", color=GREY, fontsize=14)
 plain_log(ax, [10, 30, 100, 300, 1000, 3000], lambda t: f"{t:g}")
 ax.set_ylim(40, 135)
 ax.set_xlim(8, 6000)
