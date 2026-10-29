@@ -47,9 +47,9 @@
   }
  },
  "faces": {
-  "ibm-plex-sans": {
-   "family": "IBM Plex Sans",
-   "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap"
+  "tinos": {
+   "family": "Tinos",
+   "href": "https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&display=swap"
   }
  },
  "designSystems": []

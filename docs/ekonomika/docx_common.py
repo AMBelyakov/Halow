@@ -437,3 +437,29 @@ class VkrDoc:
         cited = number_refs(self.doc, sources, chapter)
         self.doc.save(out)
         return cited, set(sources) - set(cited)
+
+    def finalize_local(self, sources, chapter, out, title):
+        """Своя нумерация раздела, как в образце кафедры (29.10, пользователь): номера 1, 2, …
+        по первому упоминанию, список «title» в конце раздела. Ключи пишутся в cites/<chapter>.json
+        для подсчёта источников ВКР; в сквозной нумерации раздел не участвует (build_all.LOCAL)."""
+        cited = []
+        texts = [t for t in self.doc.element.body.iter(qn("w:t")) if t.text and "[@" in t.text]
+        for t in texts:
+            for g in _REF.findall(t.text):
+                for k in (x.strip().lstrip("@") for x in g.split(";")):
+                    if k not in sources:
+                        raise KeyError(f"нет источника «{k}»")
+                    if k not in cited:
+                        cited.append(k)
+        num = {k: i + 1 for i, k in enumerate(cited)}
+        for t in texts:
+            t.text = _REF.sub(lambda mo: "[" + ", ".join(str(x) for x in sorted({
+                num[k.strip().lstrip("@")] for k in mo.group(1).split(";")})) + "]", t.text)
+        self.H(title, 2)
+        for k in cited:
+            self.para(f"{num[k]}. {sources[k]}")
+        os.makedirs(CITES_DIR, exist_ok=True)
+        with open(os.path.join(CITES_DIR, f"{chapter}.json"), "w", encoding="utf-8") as f:
+            json.dump(cited, f, ensure_ascii=False, indent=1)
+        self.doc.save(out)
+        return cited, set(sources) - set(cited)

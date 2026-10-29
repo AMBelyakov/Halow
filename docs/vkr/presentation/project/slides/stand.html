@@ -1,16 +1,34 @@
-<section id="stand" data-transition="fade" style="background:#F7F6F2; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
-<h2 style="font-size:64px; font-weight:600; line-height:1.1; color:#14213D">Стенд: две платы LilyGO T-HaLow</h2>
-<div style="display:flex; gap:40px; align-items:center">
-<div style="background:#FFFFFF; border:1px solid #E0DDD4; border-radius:16px; padding:14px">
-<img src="/_blob/82f3b1e34d30b40622e6547b53135693" alt="Структурная схема стенда: камера OV5640 и ESP32-S3 с модулем TX-AH (точка доступа), радиоканал Wi-Fi HaLow шириной 2 МГц на 867 МГц, модуль приёмника (станция), ESP32-S3 приёмника, компьютер" style="width:860px; height:510px; object-fit:contain">
+<section id="stand" data-transition="fade" style="background:#FFFFFF; color:#000000; font-family:'Tinos', 'Times New Roman', serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:32px">
+<h2 style="font-size:52px; font-weight:700; line-height:1.1; color:#000000; text-align:center">Стенд: две платы LilyGO T-HaLow</h2>
+<div style="display:flex; gap:32px; align-items:flex-start">
+<div style="flex:none; width:812px; display:flex; flex-direction:column; gap:8px">
+<div style="background:#FFFFFF; border:1px solid #A6A6A6; border-radius:0; padding:12px">
+<img src="/_blob/82f3b1e34d30b40622e6547b53135693" alt="Структурная схема стенда: камера OV5640 и ESP32-S3 с модулем TX-AH (точка доступа), радиоканал Wi-Fi HaLow шириной 2 МГц на 867 МГц, модуль приёмника (станция), ESP32-S3 приёмника, компьютер" style="width:786px; height:460px; object-fit:contain">
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:20px">
-<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">1</p></div><p style="font-size:23px; line-height:1.35; color:#14213D">Камера OV5640 снимает кадр, а процессор ESP32-S3 сжимает его в JPEG 480×320; качество сжатия, а при плохом канале и разрешение (до 240×160) он подбирает сам.</p></div>
-<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">2</p></div><p style="font-size:23px; line-height:1.35; color:#14213D">Кадр режется на фрагменты до 1400 байт, к ним добавляются контрольные, и по UART на 3 Мбод фрагменты уходят в радиомодуль TX-AH.</p></div>
-<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">3</p></div><p style="font-size:23px; line-height:1.35; color:#14213D">Модуль передаёт их по Wi-Fi HaLow в канале 2 МГц на 867 МГц; регулятор держит мощность минимальной, достаточной для связи, — от 1 до 14 дБм.</p></div>
-<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">4</p></div><p style="font-size:23px; line-height:1.35; color:#14213D">Приёмник отдаёт фрагменты компьютеру по USB: программа собирает и показывает видео и ведёт журнал, а камере уходит квитанция — какие фрагменты дошли.</p></div>
+<p style="font-size:20px; line-height:1.3; color:#000000; text-align:center; font-weight:700">Рисунок 7 – Структурная схема стенда</p>
+</div>
+<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:8px">
+<table style="font-size:20px; color:#000000; font-family:'Tinos', 'Times New Roman', serif">
+<tr style="background:#4F81BD"><th style="width:40%; color:#FFFFFF">Параметр</th><th style="width:60%; color:#FFFFFF">Значение</th></tr>
+<tr style="background:#D0D8E8"><td>Процессор</td><td>ESP32-S3, 2 ядра до 240 МГц [21]</td></tr>
+<tr style="background:#E9EDF4"><td>Память</td><td>флеш 16 МБ, PSRAM 8 МБ [21]</td></tr>
+<tr style="background:#D0D8E8"><td>Радиомодуль Wi-Fi HaLow</td><td>Taixin TX-AH-R900P, 859–894 МГц [17]</td></tr>
+<tr style="background:#E9EDF4"><td>Мощность Wi-Fi HaLow</td><td>до 14 дБм (25 мВт) [15, 23]</td></tr>
+<tr style="background:#D0D8E8"><td>Чувствительность, 2 МГц</td><td>−101 дБм (MCS 0) [17]</td></tr>
+<tr style="background:#E9EDF4"><td>Wi-Fi 2,4 ГГц</td><td>802.11b/g/n [21], до 20 дБм [15]</td></tr>
+<tr style="background:#D0D8E8"><td>Антенны</td><td>штатные, 0 дБи</td></tr>
+<tr style="background:#E9EDF4"><td>Процессор — модуль</td><td>UART, 2 линии [38]</td></tr>
+<tr style="background:#D0D8E8"><td>Камера</td><td>OV5640, интерфейс DVP [38]</td></tr>
+<tr style="background:#E9EDF4"><td>Прочее</td><td>microSD, Ethernet, аккумулятор 18650 [38]</td></tr>
+</table>
 </div>
 </div>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#5F6673">Wi-Fi HaLow для БПЛА · 8 / 16</p>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 32px">
+<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">1</p></div><p style="font-size:21px; line-height:1.3; color:#000000">Камера OV5640 снимает кадр, а процессор ESP32-S3 сжимает его в JPEG 480×320; качество сжатия, а при плохом канале и разрешение (до 240×160) он подбирает сам.</p></div>
+<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">2</p></div><p style="font-size:21px; line-height:1.3; color:#000000">Кадр режется на фрагменты до 1400 байт, к ним добавляются контрольные, и по UART на 3 Мбод фрагменты уходят в радиомодуль TX-AH.</p></div>
+<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">3</p></div><p style="font-size:21px; line-height:1.3; color:#000000">Модуль передаёт их по Wi-Fi HaLow в канале 2 МГц на 867 МГц; регулятор держит мощность минимальной, достаточной для связи, — от 1 до 14 дБм.</p></div>
+<div style="display:flex; gap:14px; align-items:flex-start"><div style="flex:none; width:40px; height:40px; border-radius:20px; background:#1F5FAE; display:flex; align-items:center; justify-content:center"><p style="font-size:22px; font-weight:700; color:#FFFFFF">4</p></div><p style="font-size:21px; line-height:1.3; color:#000000">Приёмник отдаёт фрагменты компьютеру по USB: программа собирает и показывает видео и ведёт журнал, а камере уходит квитанция — какие фрагменты дошли.</p></div>
+</div>
+<p style="position:absolute; right:64px; bottom:40px; width:72px; font-family:'Tinos', 'Times New Roman', serif; font-size:28px; line-height:1.4; color:#000000; text-align:center; border:1px solid #000000">8</p>
 <aside>Стенд — две одинаковые платы LilyGO T-HaLow. Камера отдаёт кадр процессору, он сжимает его в JPEG — разрешение и качество подбираются по каналу, — режет на фрагменты с контрольными и по UART отдаёт радиомодулю. Модуль передаёт по Wi-Fi HaLow в канале 2 мегагерца на 867 мегагерцах; мощность подбирает регулятор, не выше 14 дБм. Приёмник передаёт фрагменты в компьютер, тот восстанавливает видео и пишет журнал, а камере уходит квитанция.</aside>
 </section>

@@ -50,12 +50,22 @@ def cites(name):
         return json.load(f)
 
 
+LOCAL = {"ot"}   # 29.10: у раздела 5 своя нумерация и свой список (как в образце кафедры)
+
+
 def global_order():
     order = {}
     for name, *_ in PARTS:
+        if name in LOCAL:
+            continue
         for k in cites(name):
             order.setdefault(k, len(order) + 1)
     return order
+
+
+def all_sources():
+    """Число разных источников ВКР — для реферата: сквозной список и списки разделов."""
+    return len({k for name, *_ in PARTS for k in cites(name)})
 
 
 def pages(docx_path):
@@ -147,7 +157,7 @@ def main():
                 total_pages += pages(path)
                 f_, t_ = captions(path)
                 figs, tabs = figs + f_, tabs + t_
-            vol = {"pages": total_pages, "figures": figs, "tables": tabs, "sources": len(order)}
+            vol = {"pages": total_pages, "figures": figs, "tables": tabs, "sources": all_sources()}
             try:
                 with open(VOLUME_FILE, encoding="utf-8") as f:
                     old = json.load(f)
@@ -172,7 +182,7 @@ def main():
             for name, d, _, docx in PARTS:
                 f_, t_ = captions(os.path.join(d, docx))
                 figs, tabs = figs + f_, tabs + t_
-            vol = {"pages": total, "figures": figs, "tables": tabs, "sources": len(order)}
+            vol = {"pages": total, "figures": figs, "tables": tabs, "sources": all_sources()}
             try:
                 old = json.load(open(VOLUME_FILE, encoding="utf-8"))
             except FileNotFoundError:
@@ -197,7 +207,7 @@ def main():
             build()
     else:
         print("нет soffice/pdfinfo и Word — объём в реферате и листы в штампах не обновлены")
-    print(f"готово: источников в ВКР {len(order)}")
+    print(f"готово: источников в ВКР {all_sources()}, в сквозном списке {len(order)}")
 
 
 if __name__ == "__main__":

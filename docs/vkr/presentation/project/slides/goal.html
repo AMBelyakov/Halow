@@ -1,84 +1,25 @@
-<section id="goal" data-transition="fade" style="background:#f7f6f2">
-  <p id="e1-683k3a" style="position:absolute; bottom:64px; left:128px; width:1664px; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; color:#5f6673">Wi-Fi HaLow для БПЛА · 3 / 16</p>
-  <h2 id="p0a2d27384c67r0-25b7e7a1" style="position:absolute; top:128px; left:128px; width:1664px; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:64px; font-weight:600; line-height:1.1; color:#14213d">Цель, критерии и задачи</h2>
-  <div id="p0a2d27384c67r1-25b7e7a1" style="position:absolute; top:232px; left:128px; width:1664px; height:720px; display:flex; flex-direction:column; gap:12px">
-    <div style="display:flex; flex-direction:column; padding:16px 28px; background:#1f5fae; border-radius:14px">
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:30px; line-height:1.3; color:#ffffff"><b>Цель:</b> исследование эффективности Wi-Fi HaLow на платформе LilyGO T-HaLow по сравнению с традиционными протоколами Wi-Fi (2,4 ГГц, встроенными в ту же плату)</p>
-    </div>
-    <div style="display:flex; flex-direction:row; gap:14px; align-items:center; padding:0 0 0 24px">
-      <x-shape kind="arrow-down" style="width:26px; height:40px; background:#9aa3b2"></x-shape>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; font-style:italic; color:#4a5568">эффективность оценивается по четырём критериям задания:</p>
-    </div>
-    <div style="display:flex; flex-direction:row; gap:16px">
-      <div style="display:flex; flex-direction:column; gap:6px; flex:1; padding:16px 18px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="display:flex; flex-direction:row; gap:14px; align-items:center">
-          <x-icon name="Globe" style="width:40px; height:40px; color:#2a78d6"></x-icon>
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; font-weight:700; color:#14213d">Дальность</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:22px; line-height:1.3; color:#4a5568">на каком удалении ещё идут видео и связь</p>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:6px; flex:1; padding:16px 18px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="display:flex; flex-direction:row; gap:14px; align-items:center">
-          <x-icon name="Activity" style="width:40px; height:40px; color:#2a78d6"></x-icon>
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; font-weight:700; color:#14213d">Уровень сигнала</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:22px; line-height:1.3; color:#4a5568">запас до чувствительности приёмника</p>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:6px; flex:1; padding:16px 18px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="display:flex; flex-direction:row; gap:14px; align-items:center">
-          <x-icon name="Clock" style="width:40px; height:40px; color:#2a78d6"></x-icon>
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; font-weight:700; color:#14213d">Задержка</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:22px; line-height:1.3; color:#4a5568">насколько картинка отстаёт от реальности</p>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:6px; flex:1; padding:16px 18px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="display:flex; flex-direction:row; gap:14px; align-items:center">
-          <x-icon name="Warning" style="width:40px; height:40px; color:#2a78d6"></x-icon>
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; font-weight:700; color:#14213d">Потеря пакетов</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:22px; line-height:1.3; color:#4a5568">доля видео, не дошедшая до оператора</p>
-      </div>
-    </div>
-    <div style="display:flex; flex-direction:row; gap:14px; align-items:center; padding:0 0 0 24px">
-      <x-shape kind="arrow-down" style="width:26px; height:40px; background:#9aa3b2"></x-shape>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; font-style:italic; color:#4a5568">критерии измеряются в задаче 3 и сравниваются с Wi-Fi той же платы:</p>
-    </div>
-    <div style="display:flex; flex-direction:row; gap:8px">
-      <div style="display:flex; flex-direction:row; gap:14px; align-items:center; flex:1; padding:14px 16px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="width:52px; height:52px; display:flex; flex-direction:row; align-items:center; justify-content:center; flex:0 0 auto; background:#1f5fae; border-radius:26px">
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; font-weight:700; color:#ffffff">1</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:25px; line-height:1.25; color:#14213d">Анализ каналов связи БПЛА</p>
-      </div>
-      <x-shape kind="arrow-right" style="width:28px; height:18px; align-self:center; background:#c9ced6"></x-shape>
-      <div style="display:flex; flex-direction:row; gap:14px; align-items:center; flex:1; padding:14px 16px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="width:52px; height:52px; display:flex; flex-direction:row; align-items:center; justify-content:center; flex:0 0 auto; background:#1f5fae; border-radius:26px">
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; font-weight:700; color:#ffffff">2</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:25px; line-height:1.25; color:#14213d">Обоснование, методика, стенд</p>
-      </div>
-      <x-shape kind="arrow-right" style="width:28px; height:18px; align-self:center; background:#c9ced6"></x-shape>
-      <div style="display:flex; flex-direction:row; gap:14px; align-items:center; flex:1; padding:14px 16px; background:#1f5fae; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="width:52px; height:52px; display:flex; flex-direction:row; align-items:center; justify-content:center; flex:0 0 auto; background:#ffffff; border-radius:26px">
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; font-weight:700; color:#1f5fae">3</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:25px; line-height:1.25; color:#ffffff">Эксперименты и сравнение с IEEE 802.11</p>
-      </div>
-      <x-shape kind="arrow-right" style="width:28px; height:18px; align-self:center; background:#c9ced6"></x-shape>
-      <div style="display:flex; flex-direction:row; gap:14px; align-items:center; flex:1; padding:14px 16px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="width:52px; height:52px; display:flex; flex-direction:row; align-items:center; justify-content:center; flex:0 0 auto; background:#1f5fae; border-radius:26px">
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; font-weight:700; color:#ffffff">4</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:25px; line-height:1.25; color:#14213d">Экономика и условия труда</p>
-      </div>
-      <x-shape kind="arrow-right" style="width:28px; height:18px; align-self:center; background:#c9ced6"></x-shape>
-      <div style="display:flex; flex-direction:row; gap:14px; align-items:center; flex:1; padding:14px 16px; background:#fdfcfa; border:1px solid #e0ddd4; border-radius:12px">
-        <div style="width:52px; height:52px; display:flex; flex-direction:row; align-items:center; justify-content:center; flex:0 0 auto; background:#1f5fae; border-radius:26px">
-          <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; font-weight:700; color:#ffffff">5</p>
-        </div>
-        <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:25px; line-height:1.25; color:#14213d">Предложения по интеграции в БПЛА</p>
-      </div>
-    </div>
-  </div>
-  <aside>Цель — исследовать эффективность Wi-Fi HaLow на плате LilyGO T-HaLow в сравнении с традиционным Wi-Fi 2,4 гигагерца, встроенным в ту же плату, — сравнение идёт на одном железе. Эффективность оценивается по четырём критериям задания: дальность — где ещё идут видео и связь; уровень сигнала — запас до чувствительности; задержка — насколько картинка отстаёт; потери — какая доля видео не дойдёт. Все четыре измеряются в третьей задаче; остальные её обеспечивают и завершают.</aside>
+<section id="goal" data-transition="fade" style="background:#FFFFFF; color:#000000; font-family:'Tinos', 'Times New Roman', serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+<h2 style="font-size:52px; font-weight:700; line-height:1.1; color:#000000; text-align:center">Цель, критерии и задачи</h2>
+<p style="font-size:30px; line-height:1.4; color:#000000"><b>Цель:</b> исследование эффективности Wi-Fi HaLow на платформе LilyGO T-HaLow по сравнению с традиционными протоколами Wi-Fi (2,4 ГГц, встроенными в ту же плату)</p>
+<div style="display:flex; flex-direction:column; gap:12px">
+<p style="font-size:28px; font-weight:700; color:#000000">Эффективность оценивается по четырём критериям задания</p>
+<div style="display:flex; gap:16px">
+<div style="flex:1; display:flex; flex-direction:column; gap:6px; padding:16px 18px; border:1px solid #A6A6A6"><p style="font-size:26px; font-weight:700; line-height:1.25; color:#000000">Дальность</p><p style="font-size:23px; line-height:1.3; color:#000000">на каком удалении ещё идут видео и связь</p></div>
+<div style="flex:1; display:flex; flex-direction:column; gap:6px; padding:16px 18px; border:1px solid #A6A6A6"><p style="font-size:26px; font-weight:700; line-height:1.25; color:#000000">Уровень сигнала</p><p style="font-size:23px; line-height:1.3; color:#000000">запас до чувствительности приёмника</p></div>
+<div style="flex:1; display:flex; flex-direction:column; gap:6px; padding:16px 18px; border:1px solid #A6A6A6"><p style="font-size:26px; font-weight:700; line-height:1.25; color:#000000">Задержка</p><p style="font-size:23px; line-height:1.3; color:#000000">насколько картинка отстаёт от реальности</p></div>
+<div style="flex:1; display:flex; flex-direction:column; gap:6px; padding:16px 18px; border:1px solid #A6A6A6"><p style="font-size:26px; font-weight:700; line-height:1.25; color:#000000">Потеря пакетов</p><p style="font-size:23px; line-height:1.3; color:#000000">доля видео, не дошедшая до оператора</p></div>
+</div>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px">
+<p style="font-size:28px; font-weight:700; color:#000000">Задачи: критерии измеряются в задаче 3 и сравниваются с Wi-Fi той же платы</p>
+<div style="display:flex; gap:16px">
+<div style="flex:1; display:flex; flex-direction:column; padding:14px 16px; border:1px solid #A6A6A6"><p style="font-size:24px; line-height:1.3; color:#000000">1. Анализ каналов связи БПЛА</p></div>
+<div style="flex:1; display:flex; flex-direction:column; padding:14px 16px; border:1px solid #A6A6A6"><p style="font-size:24px; line-height:1.3; color:#000000">2. Обоснование, методика, стенд</p></div>
+<div style="flex:1; display:flex; flex-direction:column; padding:14px 16px; border:1px solid #A6A6A6"><p style="font-size:24px; line-height:1.3; color:#000000"><b>3. Эксперименты и сравнение с IEEE 802.11</b></p></div>
+<div style="flex:1; display:flex; flex-direction:column; padding:14px 16px; border:1px solid #A6A6A6"><p style="font-size:24px; line-height:1.3; color:#000000">4. Экономика и условия труда</p></div>
+<div style="flex:1; display:flex; flex-direction:column; padding:14px 16px; border:1px solid #A6A6A6"><p style="font-size:24px; line-height:1.3; color:#000000">5. Предложения по интеграции в БПЛА</p></div>
+</div>
+</div>
+<p style="position:absolute; right:64px; bottom:40px; width:72px; font-family:'Tinos', 'Times New Roman', serif; font-size:28px; line-height:1.4; color:#000000; text-align:center; border:1px solid #000000">3</p>
+<aside>Цель — исследовать эффективность Wi-Fi HaLow на плате LilyGO T-HaLow в сравнении с традиционным Wi-Fi 2,4 гигагерца, встроенным в ту же плату, — сравнение идёт на одном железе. Эффективность оценивается по четырём критериям задания: дальность — где ещё идут видео и связь; уровень сигнала — запас до чувствительности; задержка — насколько картинка отстаёт; потери — какая доля видео не дойдёт. Все четыре измеряются в третьей задаче; остальные её обеспечивают и завершают.</aside>
 </section>

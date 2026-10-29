@@ -143,12 +143,21 @@ for xc in xs:
                                linewidth=1.0, zorder=6))
         ax.plot([xc - 0.3, xc + 0.3], [Y(yc) - 0.3, Y(yc) + 0.3], color="black", linewidth=0.6, zorder=6)
         ax.plot([xc - 0.3, xc + 0.3], [Y(yc) + 0.3, Y(yc) - 0.3], color="black", linewidth=0.6, zorder=6)
+# 27.10: девятый светильник – в прихожей над дверью, на оси первого ряда (пользователь: «согласуй с
+# остальными 8, зачем штрихом, а осевые где»)
+xv, yv = W + C.VEST_B / 2, ys[0]
+ax.add_patch(Rectangle((xv - 0.3, Y(yv) - 0.3), 0.6, 0.6, facecolor="white", edgecolor="black",
+                       linewidth=1.0, zorder=6))
+ax.plot([xv - 0.3, xv + 0.3], [Y(yv) - 0.3, Y(yv) + 0.3], color="black", linewidth=0.6, zorder=6)
+ax.plot([xv - 0.3, xv + 0.3], [Y(yv) + 0.3, Y(yv) - 0.3], color="black", linewidth=0.6, zorder=6)
 # оси рядов светильников (штрихпунктир) — от них идут размеры до центров
 yb, xd = Y(LT) - 0.4, -0.55
 for xc in xs:
     axis_line(ax, (xc, Y(0) + 0.1), (xc, yb - 0.1))
-for yc in ys:
-    axis_line(ax, (xd - 0.1, Y(yc)), (xs[-1] + 0.45, Y(yc)))
+for k, yc in enumerate(ys):
+    axis_line(ax, (xd - 0.1, Y(yc)), ((xv + 0.45) if k == 0 else (xs[-1] + 0.45), Y(yc)))
+axis_line(ax, (xv, Y(0) + 0.1), (xv, Y(HV) - 0.1))   # 27.10: без размеров 0,70 (пользователь)
+
 dim(ax, (0, yb), (xs[0], yb), f"{fmt(R['l_B'], 2)}", fs=8, ext=((0, Y(B_L) - T), None))
 dim(ax, (xs[0], yb), (xs[1], yb), f"{fmt(R['L_B'], 2)}", fs=8)
 dim(ax, (xs[1], yb), (W, yb), f"{fmt(R['l_B'], 2)}", fs=8, ext=(None, (W, Y(B_R) - T)))

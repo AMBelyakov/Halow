@@ -5,7 +5,8 @@
 
 Для каждого источника — заметка: выходные данные, где он процитирован в записке (предложения
 с его номером из собранных docx), суть и что из него берём, статус проверки. Номера — из
-docs/vkr/sources_order.json, поэтому запускать после build_all.py.
+docs/vkr/sources_order.json (сквозной список) и docs/vkr/cites/ot.json (у раздела 5 с 29.10 своя
+нумерация, как в образце кафедры), поэтому запускать после build_all.py.
 """
 import contextlib
 import importlib.util
@@ -142,11 +143,13 @@ def load_sources():
     return allsrc
 
 
-def citations(num):
-    """Предложения записки, где стоит ссылка с номером num."""
+def citations(num, parts=None):
+    """Предложения записки (частей parts, по умолчанию всех), где стоит ссылка с номером num."""
     pat = re.compile(r"\[([0-9, –-]+)\]")
     out = []
     for part, rel in PARTS:
+        if parts and part not in parts:
+            continue
         d = docx.Document(os.path.join(DOCS, rel))
         texts = [p.text for p in d.paragraphs] + [c.text for t in d.tables for r in t.rows for c in r.cells]
         seen = set()
@@ -181,14 +184,30 @@ def main():
              "него берём. «Не перечитан» — суть по выходным данным и общеизвестному содержанию; "
              "перед защитой такой источник стоит открыть.", "",
              "| № | Источник | Тип | Статус |", "|---|---|---|---|"]
-    for key, num in sorted(order.items(), key=lambda kv: kv[1]):
+    ot = json.load(open(os.path.join(DOCS, "vkr", "cites", "ot.json"), encoding="utf-8"))
+    ot_num = {k: i + 1 for i, k in enumerate(ot)}
+    MAIN = {"Основная часть", "Экономическая часть"}
+    items = [(key, num, f"{num:02d}", str(num)) for key, num in sorted(order.items(), key=lambda kv: kv[1])]
+    items += [(key, None, f"Р5-{ot_num[key]:02d}", f"разд. 5: {ot_num[key]}") for key in ot if key not in order]
+    try:                                   # заметки прошлых запусков, которых больше нет
+        old = re.findall(r"\[\[([^\]]+)\]\]", open(os.path.join(VAULT, "00 Указатель источников.md"),
+                                                    encoding="utf-8").read())
+    except FileNotFoundError:
+        old = []
+    keep = set()
+    for key, num, tag, label in items:
         kind, gist, use, status = S.get(key, ("—", "Суть не записана.", "—", "не перечитан"))
         bib = allsrc.get(key, "?")
         short = safe(bib.split(" / ")[0].split(" : ")[0])
-        title = f"{num:02d} {short}"
-        cites = citations(num)
-        lines = ["---", f"номер: {num}", f"ключ: {key}", f"тип: {kind}", f"статус: {status}", "---", "",
-                 f"# [{num}] {short}", "", "## Выходные данные", "", bib, "", "## Суть", "", gist, "",
+        title = f"{tag} {short}"
+        keep.add(title)
+        cites = citations(num, MAIN) if num else []
+        if key in ot_num:
+            cites += citations(ot_num[key], {"Охрана труда"})
+        if key in ot_num and num:
+            label += f"; разд. 5: {ot_num[key]}"
+        lines = ["---", f"номер: {label}", f"ключ: {key}", f"тип: {kind}", f"статус: {status}", "---", "",
+                 f"# [{label}] {short}", "", "## Выходные данные", "", bib, "", "## Суть", "", gist, "",
                  "## Что берём в работе", "", use, "", "## Где в записке", ""]
         if cites:
             for part, sent in cites:
@@ -198,10 +217,14 @@ def main():
         lines += ["", "Связано: [[00 Указатель источников]], [[Зачем эксперимент, если есть публикации]]"]
         with open(os.path.join(folder, title + ".md"), "w", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
-        index.append(f"| {num} | [[{title}]] | {kind} | {status} |")
+        index.append(f"| {label} | [[{title}]] | {kind} | {status} |")
+    for t in set(old) - keep - {"Зачем эксперимент, если есть публикации"}:
+        fn = os.path.join(folder, t + ".md")
+        if os.path.exists(fn):
+            os.remove(fn)
     with open(os.path.join(VAULT, "00 Указатель источников.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(index) + "\n")
-    print("заметок:", len(order), "→", VAULT)
+    print("заметок:", len(items), "→", VAULT)
 
 
 if __name__ == "__main__":

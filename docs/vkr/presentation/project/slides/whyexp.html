@@ -1,23 +1,23 @@
-<section id="whyexp" data-transition="fade" style="display:flex; flex-direction:column; gap:48px; padding:128px 128px 160px; background:#1f5fae">
-  <h2 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:56px; font-weight:600; line-height:1.15; color:#f7f6f2">Зачем эксперимент: что модель не учитывает</h2>
+<section id="whyexp" data-transition="fade" style="display:flex; flex-direction:column; gap:48px; padding:128px 128px 160px; background:#FFFFFF">
+  <h2 style="font-family:'Tinos', 'Times New Roman', serif; font-size:56px; font-weight:700; line-height:1.15; color:#000000; text-align:center">Зачем эксперимент: что модель не учитывает</h2>
   <div style="display:flex; flex-direction:row; gap:24px">
-    <div style="display:flex; flex-direction:column; gap:18px; flex:1; padding:28px 30px; background:#2c6bb8; border-radius:16px">
-      <h3 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:32px; font-weight:600; line-height:1.2; color:#f7f6f2">Трасса</h3>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.4; color:#e3ecf8"><span style="color:#ffffff"><b>Модель:</b></span> сигнал слабеет как в свободном пространстве — 650 кбит/с достают до 4,9 км.</p>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.4; color:#e3ecf8"><span style="color:#ffffff"><b>Факт:</b></span> в городской застройке сигнал слабеет быстрее (n = 3,5, d₀ = 1 м [6]), и та же скорость достаёт лишь до 130&nbsp;м.</p>
+    <div style="display:flex; flex-direction:column; gap:18px; flex:1; padding:28px 30px; background:#FFFFFF; border:1px solid #A6A6A6; border-radius:0">
+      <h3 style="font-family:'Tinos', 'Times New Roman', serif; font-size:32px; font-weight:600; line-height:1.2; color:#000000">Дальность</h3>
+      <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:26px; line-height:1.4; color:#000000"><span style="color:#000000"><b>Модель:</b></span> по паспорту (14 дБм, чувствительность −101 дБм [17]) связь держится до потерь 115 дБ — 15,5 км прямой видимости.</p>
+      <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:26px; line-height:1.4; color:#000000"><span style="color:#000000"><b>Факт:</b></span> в нашем опыте связь оборвалась при 95 дБ (1,55 км), видео пропало при 92 дБ (1,1 км): на границе сигнал −81 дБм — на 20 дБ выше паспортной чувствительности.</p>
     </div>
-    <div style="display:flex; flex-direction:column; gap:18px; flex:1; padding:28px 30px; background:#2c6bb8; border-radius:16px">
-      <h3 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:32px; font-weight:600; line-height:1.2; color:#f7f6f2">Шум своей платы</h3>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.4; color:#e3ecf8"><span style="color:#ffffff"><b>Модель:</b></span> мешает только тепловой шум, −111 дБм, — запас десятки дБ.</p>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.4; color:#e3ecf8"><span style="color:#ffffff"><b>Факт:</b></span> камера и память платы шумят до −60 дБм — связь не устанавливалась.</p>
+    <div style="display:flex; flex-direction:column; gap:18px; flex:1; padding:28px 30px; background:#FFFFFF; border:1px solid #A6A6A6; border-radius:0">
+      <h3 style="font-family:'Tinos', 'Times New Roman', serif; font-size:32px; font-weight:600; line-height:1.2; color:#000000">Шум своей платы</h3>
+      <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:26px; line-height:1.4; color:#000000"><span style="color:#000000"><b>Модель:</b></span> мешает только тепловой шум, −111 дБм, — запас десятки дБ.</p>
+      <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:26px; line-height:1.4; color:#000000"><span style="color:#000000"><b>Факт:</b></span> камера и память платы шумят до −60 дБм — связь не устанавливалась.</p>
     </div>
-    <div style="display:flex; flex-direction:column; gap:18px; flex:1; padding:28px 30px; background:#2c6bb8; border-radius:16px">
-      <h3 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:32px; font-weight:600; line-height:1.2; color:#f7f6f2">Реализация</h3>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.4; color:#e3ecf8"><span style="color:#ffffff"><b>Модель:</b></span> радиоканал даёт до 6,5&nbsp;Мбит/⁠с.</p>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.4; color:#e3ecf8"><span style="color:#ffffff"><b>Факт:</b></span> плата передавала 0,12 Мбит/⁠с — мешали UART и паузы между фрагментами.</p>
+    <div style="display:flex; flex-direction:column; gap:18px; flex:1; padding:28px 30px; background:#FFFFFF; border:1px solid #A6A6A6; border-radius:0">
+      <h3 style="font-family:'Tinos', 'Times New Roman', serif; font-size:32px; font-weight:600; line-height:1.2; color:#000000">Реализация</h3>
+      <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:26px; line-height:1.4; color:#000000"><span style="color:#000000"><b>Модель:</b></span> радиоканал даёт до 6,5&nbsp;Мбит/⁠с.</p>
+      <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:26px; line-height:1.4; color:#000000"><span style="color:#000000"><b>Факт:</b></span> плата передавала 0,12 Мбит/⁠с — мешали UART и паузы между фрагментами.</p>
     </div>
   </div>
-  <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:30px; line-height:1.4; color:#e3ecf8">Поэтому каждая доработка проверялась опытом «выключено / включено».</p>
-  <p style="position:absolute; bottom:64px; left:128px; width:1664px; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; color:#e3ecf8">Wi-Fi HaLow для БПЛА · 7 / 16</p>
-  <aside>Почему нужен эксперимент: модель не учитывает три вещи. Трасса: модель считает, что сигнал слабеет как в свободном пространстве, и тогда 650 килобит достают до 4,9 километра; в городской застройке сигнал слабеет быстрее — при показателе затухания 3,5 и опорном расстоянии 1 метр та же скорость достаёт лишь до 130 метров. Шум своей платы: модель учитывает только тепловой шум, минус 111 дБм, и по расчёту запас — десятки децибел; на деле камера и память платы шумели до минус 60, и связь не устанавливалась. Реализация: радиоканал даёт до 6,5 мегабита, а плата передавала 0,12 — мешали UART и паузы. Поэтому каждая доработка проверялась опытом «выключено — включено».</aside>
+  <p style="font-family:'Tinos', 'Times New Roman', serif; font-size:30px; line-height:1.4; color:#000000">Поэтому каждая доработка проверялась опытом «выключено / включено».</p>
+  <p style="position:absolute; right:64px; bottom:40px; width:72px; font-family:'Tinos', 'Times New Roman', serif; font-size:28px; line-height:1.4; color:#000000; text-align:center; border:1px solid #000000">7</p>
+  <aside>Почему нужен эксперимент: модель не учитывает три вещи. Дальность: по паспорту модуля — 14 дБм и чувствительность минус 101 — связь держится до потерь на трассе 115 децибел, это 15,5 километра прямой видимости. В нашем опыте на паре плат связь оборвалась при 95 децибелах — 1,55 километра, а видео пропало при 92 — 1,1 километра. На границе сигнал был минус 81 дБм, на 20 децибел выше паспортной чувствительности: реальную чувствительность задают фон своей платы и помехи, а модель берёт паспорт. Километры здесь — пересчёт измеренных потерь на трассу прямой видимости, одинаковый для модели и опыта. Шум своей платы: модель учитывает только тепловой шум, минус 111 дБм, и по расчёту запас — десятки децибел; на деле камера и память платы шумели до минус 60, и связь не устанавливалась. Реализация: радиоканал даёт до 6,5 мегабита, а плата передавала 0,12 — мешали UART и паузы. Поэтому каждая доработка проверялась опытом «выключено — включено».</aside>
 </section>

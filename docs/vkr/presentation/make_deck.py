@@ -1909,6 +1909,194 @@ _rep("field", [
     ('25 мВт [15, 23]; у Wi-Fi — 20 дБм, 100 мВт [15]', '25 мВт [15, 23]; у Wi-Fi — 20 дБм [15]'),
 ])
 
+# ================================================================== 28.10, ночь: подписи рисунков и паспорт платы
+# Пользователь (по образцу презентации кафедры): «Рисунок N – …» под каждой картинкой; на слайде 8 —
+# таблица характеристик платы рядом со схемой. Нумерация — по порядку показа: 5 → 1–3, 8 → 4,
+# 10 → 5–7, 11 → 8–9, 13 → 10–12; слайды 5 и 11 (LIVE) подписаны в файлах показа.
+def _figcap(k, text):
+    return (f'<p style="font-size:20px; line-height:1.3; color:#5F6673; text-align:center">'
+            f'Рисунок {k} – {text}</p>')
+
+
+def _spec(rows):
+    out = [f'<table style="font-size:20px; color:{DARK}; {FONT}">',
+           '<tr style="background:#E4E1D8"><th style="width:40%">Параметр</th><th style="width:60%">Значение</th></tr>']
+    for a, b in rows:
+        out.append(f'<tr style="background:#FDFCFA"><td>{a}</td><td>{b}</td></tr>')
+    return "\n".join(out + ["</table>"])
+
+
+S["stand"] = content("stand", 8, "Стенд: две платы LilyGO T-HaLow", f'''<div style="display:flex; gap:32px; align-items:flex-start">
+<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:8px">
+<div style="background:#FFFFFF; border:1px solid #E0DDD4; border-radius:16px; padding:12px">
+<img src="{IMG_STAND}" alt="Структурная схема стенда: камера OV5640 и ESP32-S3 с модулем TX-AH (точка доступа), радиоканал Wi-Fi HaLow шириной 2 МГц на 867 МГц, модуль приёмника (станция), ESP32-S3 приёмника, компьютер" style="width:100%; height:380px; object-fit:contain">
+</div>
+{_figcap(4, "Структурная схема стенда")}
+</div>
+<div style="width:720px; flex:none; display:flex; flex-direction:column; gap:8px">
+{_spec([
+    ("Процессор", f"ESP32-S3, 2 ядра до 240 МГц {_ref('esp32s3')}"),
+    ("Память", f"флеш 16 МБ, PSRAM 8 МБ {_ref('esp32s3')}"),
+    ("Радиомодуль Wi-Fi HaLow", f"Taixin TX-AH-R900P, 859–894 МГц {_ref('txspec')}"),
+    ("Мощность Wi-Fi HaLow", f"до 14 дБм (25 мВт) {_ref('gkrch', 'gkrch2018')}"),
+    ("Чувствительность, 2 МГц", f"−101 дБм (MCS 0) {_ref('txspec')}"),
+    ("Wi-Fi 2,4 ГГц", f"802.11b/g/n {_ref('esp32s3')}, до 20 дБм {_ref('gkrch')}"),
+    ("Антенны", "штатные, 0 дБи"),
+    ("Процессор — модуль", f"UART, 2 линии {_ref('lilygo')}"),
+    ("Камера", f"OV5640, интерфейс DVP {_ref('lilygo')}"),
+    ("Прочее", f"microSD, Ethernet, аккумулятор 18650 {_ref('lilygo')}"),
+])}
+</div>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 32px">
+{_step(1, "Камера OV5640 снимает кадр, а процессор ESP32-S3 сжимает его в JPEG 480×320; качество сжатия, а при плохом канале и разрешение (до 240×160) он подбирает сам.")}
+{_step(2, "Кадр режется на фрагменты до 1400 байт, к ним добавляются контрольные, и по UART на 3 Мбод фрагменты уходят в радиомодуль TX-AH.")}
+{_step(3, "Модуль передаёт их по Wi-Fi HaLow в канале 2 МГц на 867 МГц; регулятор держит мощность минимальной, достаточной для связи, — от 1 до 14 дБм.", True)}
+{_step(4, "Приёмник отдаёт фрагменты компьютеру по USB: программа собирает и показывает видео и ведёт журнал, а камере уходит квитанция — какие фрагменты дошли.")}
+</div>''', "Стенд — две одинаковые платы LilyGO T-HaLow. Камера отдаёт кадр процессору, он сжимает его в JPEG — разрешение и качество подбираются по каналу, — режет на фрагменты с контрольными и по UART отдаёт радиомодулю. Модуль передаёт по Wi-Fi HaLow в канале 2 мегагерца на 867 мегагерцах; мощность подбирает регулятор, не выше 14 дБм. Приёмник передаёт фрагменты в компьютер, тот восстанавливает видео и пишет журнал, а камере уходит квитанция.")
+S["stand"] = S["stand"].replace("font-size:23px; line-height:1.35", "font-size:21px; line-height:1.3")
+
+for _k, (_blob, _cap) in enumerate([
+        ("2cb665aea400b73b15f0e90ac6915ed8", "UART: было → стало"),
+        ("4d05c557fe46b6d389aa156fda503f9a", "Видео и задержка: было → стало"),
+        ("c7314d3baee24b40784690494752737b", "Видео и потери: было → стало")], 5):
+    _i = S["throughput"].index(_blob)
+    _e = S["throughput"].index(">", _i) + 1
+    S["throughput"] = S["throughput"][:_e] + _figcap(_k, _cap) + S["throughput"][_e:]
+S["throughput"] = S["throughput"].replace("height:160px; object-fit:contain", "height:140px; object-fit:contain")
+
+for _k, (_blob, _cap) in enumerate([
+        ("45b68f5725231d6ef289dffcc215ff09", "Прямая и отражённая от земли волна"),
+        ("15e476130dc1281347d22e7550b9f573", "Тракт видео на борту"),
+        ("f8d3afb94bf05a73382025a84560906a", "Камера и радиомодуль на БПЛА")], 10):
+    _i = S["integration"].index(_blob)
+    _e = S["integration"].index(">", _i) + 1
+    S["integration"] = S["integration"][:_e] + _figcap(_k, _cap) + S["integration"][_e:]
+S["integration"] = S["integration"].replace("height:270px; object-fit:contain", "height:240px; object-fit:contain")
+
+# ================================================================== 29.10: оформление как в образце кафедры
+# Пользователь: «оформлено очень круто — возникнут вопросы, сделай как в презентации Орлова».
+# Титул и «Спасибо» — по образцу; остальное переоформляет academic.py при записи (и LIVE-слайды тоже).
+_TF = "font-family:'Tinos', 'Times New Roman', serif"
+_HDR = f'<p style="font-size:26px; line-height:1.3; color:#000000; text-align:center">'
+S["cover"] = f"""<section id="cover" data-transition="fade" style="background:#FFFFFF; color:#000000; {_TF}; padding:72px 128px 96px; display:flex; flex-direction:column; justify-content:space-between">
+<div style="display:flex; flex-direction:column; gap:4px">
+{_HDR}МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ</p>
+{_HDR}ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ</p>
+{_HDR}«МОСКОВСКИЙ АВИАЦИОННЫЙ ИНСТИТУТ</p>
+{_HDR}(национальный исследовательский университет)»</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:20px">
+<h1 style="font-size:72px; font-weight:400; line-height:1.1; color:#000000; text-align:center">Выпускная квалификационная работа</h1>
+<p style="font-size:36px; line-height:1.3; color:#000000; text-align:center">на тему:</p>
+<p style="font-size:44px; line-height:1.25; color:#000000; text-align:center">«Разработка предложений по увеличению дальности и надёжности передачи данных с борта беспилотного летательного аппарата»</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:10px">
+<p style="font-size:32px; line-height:1.3; color:#000000">Выполнил: студент группы М4О-03С-21 Беляков А. М.</p>
+<p style="font-size:32px; line-height:1.3; color:#000000">Научный руководитель: к.т.н., доцент каф. 402 Рощин А. Б.</p>
+</div>
+<aside>Здравствуйте. Тема работы — разработка предложений по увеличению дальности и надёжности передачи данных с борта беспилотника. Основа — анализ эффективности технологии Wi-Fi HaLow на реальной платформе LilyGO T-HaLow в сравнении с традиционным Wi-Fi.</aside>
+</section>
+"""
+S["thanks"] = f"""<section id="thanks" data-transition="fade" style="background:#FFFFFF; color:#000000; {_TF}; padding:128px; display:flex; flex-direction:column; justify-content:center">
+<h1 style="font-size:96px; font-weight:700; line-height:1.1; color:#000000; text-align:center">Спасибо за внимание!</h1>
+<aside>Спасибо за внимание, готов ответить на вопросы.</aside>
+</section>
+"""
+from academic import academic as _academic
+
+# ================================================================== 29.10: рис. 10 и 12 — из Wikimedia Commons
+# Пользователь: «рис. 10–12 попробуй из web взять» → «да, 10 и 12»; рис. 11 (тракт с UART) — своя схема.
+# 10: File:2-Ray Ground Reflection.png, Derekjc, CC BY-SA 3.0 (автор и лицензия — в подписи, по условию лицензии);
+# 12: File:Quadcopter camera drone in flight.jpg, Josh Sorenson, CC0. Уменьшены до 1200 px: img/web_*.
+_rep("integration", [
+    ('<img src="/_blob/45b68f5725231d6ef289dffcc215ff09" alt="Пункт управления с антенной на 1,5 м и БПЛА на высоте 50 м: прямая волна и волна, отражённая от земли"',
+     '<img src="/_blob/dbd5a7df9dfe870a6d2051e40d5520c0" alt="Двухлучевая модель: передатчик на высоте hₜ, приёмник на высоте hᵣ, прямой луч и луч, отражённый от земли, горизонтальное расстояние d"'),
+    ("Рисунок 10 – Прямая и отражённая от земли волна",
+     "Рисунок 10 – Прямая и отражённая от земли волна (Derekjc, CC BY-SA 3.0)"),
+    ('<img src="/_blob/f8d3afb94bf05a73382025a84560906a" alt="БПЛА до и после: камера и TX-AH на одной плате под корпусом вплотную друг к другу; после — камера снизу спереди, TX-AH с антенной сверху на корпусе, между ними кабель SPI или SDIO"',
+     '<img src="/_blob/9d448f73061963384ea49bade9b7086a" alt="Квадрокоптер в полёте, камера на подвесе под корпусом"'),
+    ("Рисунок 12 – Камера и радиомодуль на БПЛА", "Рисунок 12 – Камера под корпусом БПЛА"),
+])
+
+# ================================================================== 29.10: крупнее графики 10 и рисунки 13
+# Пользователь: «10 слайд — увеличил бы горизонтальные бары»; «Derekjc убрать из подписи, рис. 10–12 увеличить».
+# Автор и лицензия рис. 10 (CC BY-SA 3.0) — в тексте выступления, не на слайде.
+S["throughput"] = (S["throughput"].replace("height:140px; object-fit:contain", "height:215px; object-fit:contain")
+                   .replace("padding:20px 22px; display:flex; flex-direction:column; gap:8px",
+                            "padding:16px 20px; display:flex; flex-direction:column; gap:6px"))
+_rep("integration", [(" (Derekjc, CC BY-SA 3.0)", "")])
+S["integration"] = (S["integration"].replace("height:240px; object-fit:contain", "height:300px; object-fit:contain")
+                    .replace("padding:14px 18px 18px; display:flex; flex-direction:column; gap:8px",
+                             "padding:12px 16px 14px; display:flex; flex-direction:column; gap:5px")
+                    .replace("font-size:21px; line-height:1.32", "font-size:20px; line-height:1.28"))
+S["integration"] = S["integration"].replace(
+    "мощность держат минимальной, снимают в паузах передачи.</aside>",
+    "мощность держат минимальной, снимают в паузах передачи. Рисунок 10 — Wikimedia Commons, автор Derekjc, лицензия CC BY-SA 3.0; рисунок 12 — Wikimedia Commons, Josh Sorenson, CC0.</aside>")
+assert "Derekjc, лицензия" in S["integration"]
+
+# ================================================================== 29.10: крупнее рис. 4
+# Пользователь: «рис. 4 — справа много пустого места, лучше увеличить рисунок»: рамка по ширине схемы,
+# схема выше на ≈ 20 %, таблица занимает остаток ширины; отступы слайда 8 чуть меньше.
+S["stand"] = (S["stand"]
+    .replace('<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:8px">',
+             '<div style="flex:none; width:812px; display:flex; flex-direction:column; gap:8px">', 1)
+    .replace("width:100%; height:380px; object-fit:contain", "width:786px; height:460px; object-fit:contain", 1)
+    .replace('<div style="width:720px; flex:none; display:flex; flex-direction:column; gap:8px">',
+             '<div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:8px">', 1)
+    .replace("flex-direction:column; gap:48px", "flex-direction:column; gap:32px", 1))
+assert "height:460px" in S["stand"] and "width:812px" in S["stand"]
+
+# ================================================================== 29.10, вечер: слайд 4 — три реальных сценария
+# Пользователь: «три сценария — почему строчек 4? и хотелось бы реальные сценарии», «картинки бы»,
+# затем «собран ужасно, картинки другие найди, макет отвратный». Три колонки, как на слайде 13: снимок
+# беспилотника за работой (Wikimedia Commons, авторы — в тексте выступления), группа задач из
+# подраздела 1.1 ВКР и оценка трёх технологий. Скорости и дальности — измеренные на паре плат (граница
+# связи — слайд 12, ёмкость Wi-Fi 15,7–19,2 Мбит/с — опыт Wi-Fi), LoRa — [@an1200]. Снимки — рисунки 1–3,
+# остальные рисунки сдвинуты на три номера.
+_YES, _NO, _PART = ("подходит", "#1B7A4A"), ("нет", "#B23A2E"), ("частично", "#8A5A00")
+
+
+def _verd(tech, v, text, hot=False):
+    word, col = v
+    bg = "; background:#E4ECF7; padding:4px 10px" if hot else "; padding:4px 10px"
+    tail = f": {text}" if text else ""
+    return (f'<p style="font-size:22px; line-height:1.3; color:{DARK}{bg}"><b>{tech}</b> — '
+            f'<span style="color:{col}"><b>{word}</b></span>{tail}</p>')
+
+
+def _scen(k, blob, alt, cap, head, need, lora, halow, wifi):
+    return (f'<div style="flex:1; background:#FDFCFA; border:1px solid #E0DDD4; border-radius:12px; '
+            f'padding:12px 16px 16px; display:flex; flex-direction:column; gap:6px">'
+            f'<img src="/_blob/{blob}" alt="{alt}" style="width:100%; height:290px; object-fit:cover">'
+            f'{_figcap(k, cap)}'
+            f'<h3 style="font-size:30px; font-weight:600; line-height:1.2; color:{DARK}">{head}</h3>'
+            f'<p style="font-size:21px; line-height:1.3; color:#5F6673">{need}</p>'
+            f'{_verd("LoRa", *lora)}{_verd("Wi-Fi HaLow", *halow, hot=True)}{_verd("Wi-Fi 2,4 ГГц", *wifi)}</div>')
+
+
+S["niche"] = content("niche", 4, "Три сценария применения БПЛА — какой канал подходит", f"""<div style="display:flex; gap:20px; align-items:stretch">
+{_scen(1, "f2085dc4fcc2fcb0b63611ad5d663672", "Беспилотный вертолёт Schiebel CAMCOPTER S-100 у опор линии электропередачи", "Беспилотный вертолёт у ЛЭП",
+       "Управление и телеметрия", "облёт ЛЭП по маршруту: команды и координаты — единицы кбит/с, без потерь",
+       (_YES, "километры"), (_YES, "до 1,5 км"), (_PART, "до 0,9 км"))}
+{_scen(2, "427d8876e88433fb3eddf4688308dd06", "Оператор поисково-спасательной группы с пультом, беспилотник взлетает над полем", "БПЛА поисково-спасательной группы",
+       "Видео оператору", "поиск людей, наблюдение за пожаром: сотни кбит/с, малая задержка, за деревьями",
+       (_NO, "0,3–5,5 кбит/с"), (_YES, "видео 480×320"), (_PART, "дальность меньше"))}
+{_scen(3, "baad8c558bb104708a56b4421600a059", "Снимок с беспилотника: обследование стального моста через реку", "Снимок с БПЛА при обследовании моста",
+       "Материалы обследования", "снимки опор, мостов, крыш: большой объём, задержка не важна",
+       (_NO, ""), (_PART, "около 1&nbsp;Мбит/с, долго"), (_YES, "15,7–19,2&nbsp;Мбит/с"))}
+</div>
+<p style="font-size:26px; line-height:1.4; color:{DARK}; background:#E4ECF7; border-radius:10px; padding:12px 22px"><b>Wi-Fi HaLow</b> — видео оператору на сотни метров и километр, за деревьями и строениями. Цена — скорость в 15–18 раз ниже, чем у Wi-Fi той же платы.</p>""",
+    "Задачи беспилотника по характеру данных делятся на три группы, на рисунках — по примеру на каждую. Первая — управление и телеметрия, например облёт линии электропередачи по маршруту: данных мало, но каждая команда должна дойти. Здесь подходят все: LoRa — на километры, Wi-Fi HaLow — до полутора километров, Wi-Fi той же платы — до 0,9. Вторая — видео оператору: поиск людей, наблюдение за пожаром. Нужны сотни килобит и малая задержка, часто за деревьями. LoRa видео не передаёт, Wi-Fi теряет сигнал быстрее, а Wi-Fi HaLow даёт около мегабита — видео 480 на 320. Третья — материалы обследования: снимки опор, мостов, крыш. Важен объём, а не задержка — здесь лучше Wi-Fi с его 16–19 мегабитами, Wi-Fi HaLow передаст, но долго. Итог: ниша Wi-Fi HaLow — видео оператору на сотни метров и километр, ценой скорости в 15–18 раз ниже Wi-Fi. Снимки — Wikimedia Commons: рисунок 1 — Schiebel Group, CC BY-SA 4.0; рисунок 2 — Blsar-sar, CC BY-SA 4.0; рисунок 3 — Oregon Department of Transportation, CC BY 2.0.",
+    bg=ALT)
+
+# рисунки 1–3 теперь на слайде 4 — номера остальных рисунков (подписи и ссылки в тексте выступления) +3;
+# слайды из показа (theory, release) перенумерованы в своих файлах
+_RN = re.compile(r"([Рр]исун(?:ок|ка|ке))\s(\d+)")
+for _sid in list(S):
+    if _sid != "niche":
+        S[_sid] = _RN.sub(lambda m: f"{m.group(1)} {int(m.group(2)) + 3}", S[_sid])
+
 LIVE = {"goal", "release", "theory", "whyexp"}  # 28.10: theory (расчёт выигрыша убран) и whyexp («Факт:») — правки пользователя в показе  # 28.10: release — вёрстка пользователя из показа, окно сценария 831 кбит/с          # слайды, которые пользователь правит в показе: файл берётся из показа, не генерируется
 
 # 21.10 (пользователь): теория → обоснование → стол → 5 м → 1 км; расчётная карта — сразу за теорией
@@ -1929,9 +2117,13 @@ for _sid in ORDER:                      # номера страниц — по �
 assert len(ORDER) - len(BUFFER) == TOTAL and set(ORDER) | set(SPARE) == set(S)
 for sid in ORDER:
     if sid in LIVE and os.path.exists(os.path.join(SL, sid + ".html")):
+        with io.open(os.path.join(SL, sid + ".html"), encoding="utf-8") as f:   # 29.10: файл из показа — только оформление
+            _live = f.read()
+        with io.open(os.path.join(SL, sid + ".html"), "w", encoding="utf-8", newline="") as f:
+            f.write(_academic(_live))
         continue
     with io.open(os.path.join(SL, sid + ".html"), "w", encoding="utf-8") as f:
-        f.write(S[sid])
+        f.write(_academic(S[sid]))
 # слайды, которых больше нет в презентации
 for fn in os.listdir(SL):
     if fn.endswith(".html") and fn[:-5] not in ORDER:
@@ -1950,8 +2142,8 @@ deck = {
         "results": {"description": "Результаты практической части: стол, 5 м через стену, граница связи", "start": "throughput"},
         "finish": {"description": "Предложения для БПЛА, экономика, охрана труда и выводы", "start": "integration"},
     },
-    "faces": {"ibm-plex-sans": {"family": "IBM Plex Sans",
-                                "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap"}},
+    "faces": {"tinos": {"family": "Tinos",       # 29.10: Times New Roman по метрике — как в образце кафедры
+                        "href": "https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&display=swap"}},
     "designSystems": [],
 }
 with io.open(os.path.join(ROOT, "deck.json"), "w", encoding="utf-8") as f:
